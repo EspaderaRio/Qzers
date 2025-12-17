@@ -33,12 +33,16 @@ const DEFAULT_SETTINGS = {
 };
 
 const THEME_PRESETS = {
+  /* ===== EXISTING ===== */
   light: {
     colors: {
       primary: "#2563eb",
       background: "#f8fafc",
       card: "#ffffff",
       text: "#0f172a"
+    },
+    font: {
+      family: "Google Sans"
     }
   },
 
@@ -48,6 +52,9 @@ const THEME_PRESETS = {
       background: "#020617",
       card: "#020617",
       text: "#e5e7eb"
+    },
+    font: {
+      family: "Open Sans"
     }
   },
 
@@ -73,8 +80,95 @@ const THEME_PRESETS = {
     font: {
       family: "Playfair Display"
     }
+  },
+
+  /* ===== NEW THEMES ===== */
+
+  midnight: {
+    colors: {
+      primary: "#818cf8",
+      background: "#0b1020",
+      card: "#121a33",
+      text: "#e0e7ff"
+    },
+    font: {
+      family: "Google Sans"
+    }
+  },
+
+  forest: {
+    colors: {
+      primary: "#16a34a",
+      background: "#052e16",
+      card: "#064e3b",
+      text: "#ecfdf5"
+    },
+    font: {
+      family: "Open Sans"
+    }
+  },
+
+  sunset: {
+    colors: {
+      primary: "#f97316",
+      background: "#fff7ed",
+      card: "#ffedd5",
+      text: "#7c2d12"
+    }
+  },
+
+  rose: {
+    colors: {
+      primary: "#e11d48",
+      background: "#fff1f2",
+      card: "#ffe4e6",
+      text: "#4c0519"
+    }
+  },
+
+  graphite: {
+    colors: {
+      primary: "#38bdf8",
+      background: "#0f172a",
+      card: "#111827",
+      text: "#cbd5f5"
+    },
+    font: {
+      family: "Roboto"
+    }
+  },
+
+  lavender: {
+    colors: {
+      primary: "#8b5cf6",
+      background: "#f5f3ff",
+      card: "#ede9fe",
+      text: "#312e81"
+    }
+  },
+
+  coffee: {
+    colors: {
+      primary: "#78350f",
+      background: "#faf3e0",
+      card: "#f3e5ab",
+      text: "#3f1d0b"
+    },
+    font: {
+      family: "Playfair Display"
+    }
+  },
+
+  mint: {
+    colors: {
+      primary: "#14b8a6",
+      background: "#ecfeff",
+      card: "#cffafe",
+      text: "#134e4a"
+    }
   }
 };
+
 
 
 
@@ -1294,12 +1388,13 @@ async function loadAllData() {
 let aiLoadingEl = null;
 
 function showAILoading() {
-  document.getElementById('aiLoading').classList.add('show');
+  document.getElementById("aiLoading")?.classList.add("show");
 }
 
 function hideAILoading() {
-  document.getElementById('aiLoading').classList.remove('show');
+  document.getElementById("aiLoading")?.classList.remove("show");
 }
+
 
 
 

@@ -130,37 +130,70 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
   transform: translateX(0);
 }
 
-    .loading {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: none;
-      z-index: 1000;
-    }
+.loading {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
 
-    .loading.show {
-      display: block;
-    }
+.loading {
+  position: relative;
+  width: 80px;
+  height: 80px;
 
-    .spinner {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #3498db;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
-    }
+  background: url("icons/loading.svg") no-repeat center;
+  background-size: contain;
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+  animation: spin 2s linear infinite;
+  overflow: hidden;
+}
+
+/* shimmer light sweep */
+.loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255,255,255,0.6) 50%,
+    transparent 70%
+  );
+
+  animation: light-run 1.5s linear infinite;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
+/* animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes light-run {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
 
 /* ===== MODAL ===== */
 .modal {
@@ -477,37 +510,6 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
   transform: translateX(0);
 }
 
-    .loading {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: none;
-      z-index: 1000;
-    }
-
-    .loading.show {
-      display: block;
-    }
-
-    .spinner {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #3498db;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
 .icon {
   width: 120px;
   height: 120px;
