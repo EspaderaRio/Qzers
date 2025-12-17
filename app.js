@@ -548,30 +548,30 @@ async function onConfigChange(newConfig) {
 
 <div class="mb-6 flex gap-3 relative z-10 cards-actions">
   <button id="addCardBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-  style="display: flex; border-radius: var(--radius); align-items: center; justify-content: center;">
+  style="display: flex; background: white; border-radius: var(--radius); align-items: center; justify-content: center;">
     <img src="icons/add.svg" class="icon md" />
   </button>
 
   <button id="aiGenerateBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-  style="display: flex; border-radius: var(--radius); align-items: center; justify-content: center;">
+  style="display: flex; background: white; background: white; border-radius: var(--radius); align-items: center; justify-content: center;">
     <img src="icons/ai.svg" class="icon md" />
   </button>
 
   <button id="importCardsJsonBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-  style="display: flex; border-radius: var(--radius);align-items: center; justify-content: center;">
+  style="display: flex; background: white; border-radius: var(--radius);align-items: center; justify-content: center;">
     <img src="icons/import.svg" class="icon md" />
   </button>
 
   ${cards.length > 0 ? `
     <button id="studyCardsBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-    style="display: flex; border-radius: var(--radius); align-items: center; justify-content: center;">
+    style="display: flex; background: white; border-radius: var(--radius); align-items: center; justify-content: center;">
       <img src="icons/flashcard.svg" class="icon md" />
     </button>
   ` : ''}
   
   ${cards.length > 1 ? `
   <button id="quizCardsBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-    style="display:flex; border-radius: var(--radius); align-items:center;justify-content:center;">
+    style="display:flex; background: white; border-radius: var(--radius); align-items:center;justify-content:center;">
     📝
   </button>
 ` : ''}
