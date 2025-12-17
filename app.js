@@ -654,6 +654,7 @@ function renderCardsView() {
 
           <!-- ACTIONS -->
           <div class="cards-actions">
+          <div class="actions-inner">
             <button id="addCardBtn" class="action-btn">
               <img src="icons/add.svg" class="icon md" />
               <span class="action-label">Add</span>
@@ -682,6 +683,7 @@ function renderCardsView() {
                 <span class="action-label">Quiz</span>
               </button>
             ` : ""}
+              </div>
           </div>
 
           <!-- EMPTY STATE / LIST -->

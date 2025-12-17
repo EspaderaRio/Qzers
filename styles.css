@@ -942,18 +942,22 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
 
 /* ===== ACTION BAR ===== */
 .cards-actions {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cards-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.actions-inner {
   display: flex;
   gap: 5px;
-  overflow-x: auto;
-
   padding: 0.25rem 0.25rem 0.75rem;
-  margin-bottom: 1.5rem;
 
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-
-  scrollbar-width: none; 
-  scroll-snap-type: x mandatory;
+  width: max-content;      /* 👈 magic */
+  margin-inline: auto;     /* 👈 centers when it fits */
 }
 
 .cards-actions::after {
@@ -977,14 +981,11 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
   flex: 0 0 auto;              /* IMPORTANT */
   min-width: 80px;
   min-height: 80px;
-
   background: #ffffff;
   border-radius: var(--radius);
 
   display: flex;
   align-items: center;
-  justify-content: center;
-
   box-shadow: 0 6px 14px rgba(0,0,0,0.08);
   touch-action: manipulation;
   scroll-snap-align: center;
