@@ -515,7 +515,7 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
   height: 120px;
 }
 
-.icon.sm { width: 20px; height: 20px; }
+.icon.sm { width: 30px; height: 30px; }
 .icon.md { width: 30px; height: 30px; }
 .icon.lg { width: 36px; height: 36px; }
 .icon.xl { width: 44px; height: 44px; }
@@ -914,6 +914,7 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
 }
 
 .btn-back {
+  width: 50px;
   padding: 0.5rem 0.5rem;
   border-radius: 0.5rem;
   background: white;
