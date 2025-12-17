@@ -3,6 +3,7 @@
   --background: #f0f4f8;
   --card-bg: #ffffff;
   --text: #1e293b;
+  --text-muted: color-mix(in srgb, var(--text), transparent 45%);
 
   --font-size: 14px;
   --radius: 16px;
@@ -17,6 +18,9 @@ body {
   color: var(--text);
   box-sizing: border-box;
 }
+h1 { font-size: calc(var(--font-size) * 2.2); }
+h2 { font-size: calc(var(--font-size) * 1.8); }
+h3 { font-size: calc(var(--font-size) * 1.4); }
 
 .card {
   background: var(--card-bg);
@@ -230,16 +234,6 @@ body {
   animation: fadeIn 0.25s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
 @font-face {
   font-family: "BBHBartle";
   src: url("fonts/BBHBartle-Regular.ttf") format("truetype");
@@ -287,22 +281,6 @@ body {
   src: url("fonts/Roboto-VariableFont_wdth\,wght.ttf") format("truetype");
 }
 
-.settings-fab {
-  position: fixed;
-  bottom: 1.25rem;
-  right: 1.25rem;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
-  font-size: 22px;
-  border: none;
-  box-shadow: 0 12px 30px rgba(0,0,0,.25);
-  cursor: pointer;
-  z-index: 1200;
-  transition: transform .2s ease, box-shadow .2s ease;
-}
 
 .settings-fab:hover {
   transform: scale(1.08) rotate(10deg);
@@ -384,10 +362,6 @@ body {
   background: var(--background);
   color: var(--text);
 }
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
 @keyframes slideUp {
   from {
@@ -399,36 +373,12 @@ body {
     opacity: 1;
   }
 }
-:root {
-  --primary: #2563eb;
-  --background: #f0f4f8;
-  --card-bg: #ffffff;
-  --text: #1e293b;
-
-  --font-size: 14px;
-  --radius: 16px;
-  --font-family: Inter, system-ui, sans-serif;
-}
-
-/* Global text */
-body {
-  font-family: var(--font-family);
-  font-size: var(--font-size);
-  background: var(--background);
-  color: var(--text);
-  box-sizing: border-box;
-}
 
 .card {
   background: var(--card-bg);
   border-radius: var(--radius);
 }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
+      
     @keyframes slideIn {
       from { opacity: 0; transform: translateX(-20px); }
       to { opacity: 1; transform: translateX(0); }
@@ -568,46 +518,6 @@ body {
 .icon.lg { width: 36px; height: 36px; }
 .icon.xl { width: 44px; height: 44px; }
 
-
-/* ===== MODAL ===== */
-.modal {
-  background: rgba(15, 23, 42, 0.6);
-  width: 90%;
-  max-width: 420px;
-  border-radius: 1.25rem;
-  padding: 1.5rem;
-  box-shadow: 0 20px 40px rgb(44 19 19 / 25%);
-}
-
-.modal h2 {
-  margin-bottom: 1rem;
-  font-size: 1.25rem;
-  color: #dad2d2;
-}
-
-/* ===== INPUTS ===== */
-.modal label {
-  display: block;
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-  color: #cbcbcb ;
-}
-
-.modal input {
-  width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  border: 1px solid #938989;
-  font-size: 1rem;
-}
-
-/* ===== ACTIONS ===== */
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
 #confirmAIModal {
   color: #7b9afb;
 }
@@ -641,16 +551,6 @@ body {
   animation: fadeIn 0.25s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
 @font-face {
   font-family: "BBHBartle";
   src: url("fonts/BBHBartle-Regular.ttf") format("truetype");
@@ -699,6 +599,9 @@ body {
 }
 
 .settings-fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: fixed;
   bottom: 1.25rem;
   right: 1.25rem;
@@ -735,16 +638,6 @@ body {
   animation: fadeIn .2s ease;
 }
 
-.settings-modal {
-  width: 100%;
-  max-width: 420px;
-  background: var(--card-bg);
-  border-radius: 22px;
-  padding: 1.75rem;
-  box-shadow: 0 30px 80px rgba(0,0,0,.35);
-  animation: slideUp .25s ease;
-  font-family: var(--font-family);
-}
 .settings-header {
   display: flex;
   align-items: center;
@@ -794,10 +687,6 @@ body {
   border: 1px solid rgba(0,0,0,.1);
   background: var(--background);
   color: var(--text);
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 @keyframes slideUp {
@@ -906,6 +795,9 @@ body {
 
 /* ===== CARD ===== */
 .category-card {
+  font-size: calc(var(--font-size) * 1.4);
+  font-weight: 500;
+  color: var(--text);
   position: relative;
   padding: 1.5rem;
   background: var(--card-bg);
@@ -932,6 +824,24 @@ body {
 }
 
 /* ===== CARD CONTENT ===== */
+.category-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.category-title {
+  font-size: calc(var(--font-size) * 1.4);
+  font-weight: 500;
+  color: var(--text);        
+}
+
+.category-subtitle {
+  font-size: calc(var(--font-size) * 0.9);
+  color: var(--text-muted);    
+  opacity: 0.8;
+}
+
 .category-header {
   display: flex;
   align-items: center;
@@ -1004,7 +914,7 @@ body {
 .btn-back {
   padding: 0.5rem 0.5rem;
   border-radius: 0.5rem;
-  background: var(--card-bg);
+  background: white;
   color: var(--text);
   font-size: var(--font-size);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -1069,7 +979,7 @@ body {
   min-width: 80px;
   min-height: 80px;
 
-  background: white;
+  background: #ffffff;
   border-radius: var(--radius);
 
   display: flex;
@@ -1080,7 +990,9 @@ body {
   touch-action: manipulation;
   scroll-snap-align: center;
 }
-
+.action-label{
+  color: #28577f;
+}
 .action-btn:active {
   transform: scale(0.96);
 }

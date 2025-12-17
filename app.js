@@ -1,19 +1,19 @@
-   
-   const AI_API_URL =
+
+const AI_API_URL =
   "https://flashcards-ai-backend.onrender.com/api/generate-cards";
 
-    const defaultConfig = {
-      app_title: "Flashcard Study",
-      app_subtitle: "Create custom subjects and master your knowledge",
-      background_color: "#f0f4f8",
-      card_background: "#ffffff",
-      primary_color: "#2563eb",
-      text_color: "#1e293b",
-      secondary_color: "#64748b"
-    };
+const defaultConfig = {
+  app_title: "Flashcard Study",
+  app_subtitle: "Create custom subjects and master your knowledge",
+  background_color: "#f0f4f8",
+  card_background: "#ffffff",
+  primary_color: "#2563eb",
+  text_color: "#1e293b",
+  secondary_color: "#64748b"
+};
 
-    const DEFAULT_SETTINGS = {
-  theme: "light",          
+const DEFAULT_SETTINGS = {
+  theme: "light",
   colors: {
     primary: "#2563eb",
     background: "#f8fafc",
@@ -27,7 +27,7 @@
   },
   layout: {
     radius: 16,
-    cardSize: "normal",    
+    cardSize: "normal",
     animation: "flip"
   }
 };
@@ -78,18 +78,18 @@ const THEME_PRESETS = {
 
 
 
-    let config = { ...defaultConfig };
-    let allData = [];
-    let currentView = 'subjects'; // subjects, sets, cards, study
-    let currentSubject = null;
-    let currentSet = null;
-    let currentCardIndex = 0;
-    let isFlipped = false;
-    let isLoading = false;
-    let quizIndex = 0;
-    let quizScore = 0;
-    let quizQuestions = [];
-    let deferredInstallPrompt = null;
+let config = { ...defaultConfig };
+let allData = [];
+let currentView = 'subjects'; // subjects, sets, cards, study
+let currentSubject = null;
+let currentSet = null;
+let currentCardIndex = 0;
+let isFlipped = false;
+let isLoading = false;
+let quizIndex = 0;
+let quizScore = 0;
+let quizQuestions = [];
+let deferredInstallPrompt = null;
 
 function applyUserSettings() {
   const s = userSettings;
@@ -170,12 +170,12 @@ function renderCustomizationPanel() {
         <span>Font</span>
         <select onchange="updateSetting('font.family', this.value)">
           ${[
-            "BBHBartle","BBHBorgle","BBHHegarty",
-            "Open Sans","Open Sans Italic",
-            "Google Sans","Google Sans Italic",
-            "Playfair Display","Playfair Display Italic",
-            "Roboto","Roboto Italic"
-          ].map(f => `
+      "BBHBartle", "BBHBorgle", "BBHHegarty",
+      "Open Sans", "Open Sans Italic",
+      "Google Sans", "Google Sans Italic",
+      "Playfair Display", "Playfair Display Italic",
+      "Roboto", "Roboto Italic"
+    ].map(f => `
             <option ${userSettings.font.family === f ? "selected" : ""}>
               ${f}
             </option>
@@ -227,7 +227,10 @@ function resetSettings() {
 
 
 document.addEventListener("click", e => {
-  if (e.target.id !== "openSettingsBtn") return;
+  if (document.querySelector(".settings-overlay")) return;
+
+  const btn = e.target.closest("#openSettingsBtn");
+  if (!btn) return;
 
   const overlay = document.createElement("div");
   overlay.className = "settings-overlay";
@@ -240,6 +243,11 @@ document.addEventListener("click", e => {
 
   document.body.appendChild(overlay);
 
+  // ✅ Trigger animation AFTER mount
+  requestAnimationFrame(() => {
+    overlay.classList.add("open");
+  });
+
   overlay.addEventListener("click", ev => {
     if (ev.target === overlay) overlay.remove();
   });
@@ -248,6 +256,8 @@ document.addEventListener("click", e => {
     overlay.remove();
   });
 });
+
+
 
 
 
@@ -290,78 +300,62 @@ function deepMerge(target, source) {
   return output;
 }
 
+const emojiOptions = ['📚', '🧪', '🎨', '💻', '🌍', '📐', '🎵', '⚽', '🔬', '📖', '🎭', '🏛️', '💼', '🍎', '🚀', '🎯', '💡', '🔧', '🌟', '🎪'];
 
+const dataHandler = {
+  onDataChanged(data) {
+    allData = data;
+    renderApp();
+  }
+};
 
-async function onConfigChange(newConfig) {
-  Object.assign(config, newConfig);
-
-  userSettings.primary = newConfig.primary_color || userSettings.primary;
-  userSettings.background = newConfig.background_color || userSettings.background;
-  userSettings.cardBg = newConfig.card_background || userSettings.cardBg;
-  userSettings.text = newConfig.text_color || userSettings.text;
-  userSettings.fontSize = newConfig.font_size || userSettings.fontSize;
-  userSettings.fontFamily = newConfig.font_family || userSettings.fontFamily;
-
-  applyUserSettings();
-  renderApp();
+function getSubjects() {
+  const subjectMap = new Map();
+  allData.filter(item => item.type === 'subject').forEach(subject => {
+    subjectMap.set(subject.subject_id, subject);
+  });
+  return Array.from(subjectMap.values());
 }
 
-    const emojiOptions = ['📚', '🧪', '🎨', '💻', '🌍', '📐', '🎵', '⚽', '🔬', '📖', '🎭', '🏛️', '💼', '🍎', '🚀', '🎯', '💡', '🔧', '🌟', '🎪'];
+function getSetsForSubject(subjectId) {
+  const setMap = new Map();
+  allData.filter(item => item.type === 'set' && item.subject_id === subjectId).forEach(set => {
+    setMap.set(set.set_id, set);
+  });
+  return Array.from(setMap.values());
+}
 
-    const dataHandler = {
-      onDataChanged(data) {
-        allData = data;
-        renderApp();
-      }
-    };
+function getCardsForSet(setId) {
+  return allData.filter(item => item.type === 'card' && item.set_id === setId);
+}
 
-    function getSubjects() {
-      const subjectMap = new Map();
-      allData.filter(item => item.type === 'subject').forEach(subject => {
-        subjectMap.set(subject.subject_id, subject);
-      });
-      return Array.from(subjectMap.values());
-    }
+function renderApp() {
+  const app = document.getElementById('app');
 
-    function getSetsForSubject(subjectId) {
-      const setMap = new Map();
-      allData.filter(item => item.type === 'set' && item.subject_id === subjectId).forEach(set => {
-        setMap.set(set.set_id, set);
-      });
-      return Array.from(setMap.values());
-    }
+  let content = '';
+  if (currentView === 'subjects') {
+    content = renderSubjectsView();
+  } else if (currentView === 'sets') {
+    content = renderSetsView();
+  } else if (currentView === 'cards') {
+    content = renderCardsView();
+  } else if (currentView === 'study') {
+    content = renderStudyView();
+  }
+  else if (currentView === 'quiz') {
+    content = renderQuizView();
+  }
+  else if (currentView === 'quiz-result') {
+    content = renderQuizResultView();
+  }
+  else if (currentView === 'customize') {
+    content = renderCustomizationPanel();
+  }
 
-    function getCardsForSet(setId) {
-      return allData.filter(item => item.type === 'card' && item.set_id === setId);
-    }
 
-    function renderApp() {
-      const app = document.getElementById('app');
-      
-      let content = '';
-      if (currentView === 'subjects') {
-        content = renderSubjectsView();
-      } else if (currentView === 'sets') {
-        content = renderSetsView();
-      } else if (currentView === 'cards') {
-        content = renderCardsView();
-      } else if (currentView === 'study') {
-        content = renderStudyView();
-      }
-       else if (currentView === 'quiz') {
-          content = renderQuizView();
-       }
-       else if (currentView === 'quiz-result') {
-          content = renderQuizResultView();
-       }
-       else if (currentView === 'customize') {
-        content = renderCustomizationPanel();
-      }
-
-       
-      app.innerHTML = content;
-      attachEventListeners();
-    }
+  app.innerHTML = content;
+  attachEventListeners();
+}
 
 function renderSubjectsView() {
   const subjects = getSubjects();
@@ -425,19 +419,18 @@ function renderSubjectsView() {
             </button>
           </div>
 
-          ${
-            subjects.length === 0
-              ? `
+          ${subjects.length === 0
+      ? `
                 <div class="subjects-empty">
                   <p>No subjects yet. Create your first subject to get started!</p>
                 </div>
               `
-              : `
+      : `
                 <div class="subjects-grid">
                   ${subjectsHTML}
                 </div>
               `
-          }
+    }
 
         </div>
       </div>
@@ -445,28 +438,25 @@ function renderSubjectsView() {
   `;
 }
 
-    function renderSetsView() {
-      if (!currentSubject || !currentSubject.subject_id) {
-      currentView = 'subjects';
-      renderApp();
-      return '';
-      }
+function renderSetsView() {
+  if (!currentSubject || !currentSubject.subject_id) {
+    currentView = 'subjects';
+    renderApp();
+    return '';
+  }
 
-      const sets = getSetsForSubject(currentSubject.subject_id);
-      const fontSize = config.font_size || 12;
-      const titleColor = config.text_color || defaultConfig.text_color;
-      const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
-      const primaryColor = config.primary_color || defaultConfig.primary_color;
-      const cardBg = config.card_background || defaultConfig.card_background;
+  const sets = getSetsForSubject(currentSubject.subject_id);
+  const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
 
-      const setsHTML = sets.map(set => {
-        const cards = getCardsForSet(set.set_id);
-        return `
-          <div class="category-card p-6 rounded-2xl" data-set-id="${set.set_id}" style="background: ${cardBg}; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative;">
+
+  const setsHTML = sets.map(set => {
+    const cards = getCardsForSet(set.set_id);
+    return `
+          <div class="category-card p-6 rounded-2xl" data-set-id="${set.set_id}" style="background: var(--card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative;">
             <button class="delete-set-btn" data-set-id="${set.set_id}" style="position: absolute; top: 0.75rem; right: 0.75rem; color: ${subtitleColor}; font-size: calc(var(--font-size) * 1.2);
  background: none; border: none; cursor: pointer; padding: 0.25rem; line-height: 1;">×</button>
             <h3 style="font-size: calc(var(--font-size) * 1.3);
- font-weight: 400; color: ${titleColor}; margin-bottom: 0.5rem;">${set.set_name}</h3>
+ font-weight: 400; color: var(--text); margin-bottom: 0.5rem;">${set.set_name}</h3>
             <p style="font-size: calc(var(--font-size) * 0.875);
  color: ${subtitleColor};">${cards.length} card${cards.length !== 1 ? 's' : ''}</p>
             ${cards.length > 0 ? `
@@ -477,21 +467,21 @@ function renderSubjectsView() {
             ` : ''}
           </div>
         `;
-      }).join('');
+  }).join('');
 
-      return `
+  return `
         <div class="w-full h-full overflow-auto">
           <div class="min-h-full flex flex-col p-6">
             <div class="max-w-4xl w-full mx-auto">
               <div class="flex items-center justify-between mb-8 slide-in">
-                <button id="backToSubjectsBtn" class="px-4 py-2 rounded-lg transition-all" style="background: ${cardBg}; color: ${titleColor}; font-size: var(--font-size); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <button id="backToSubjectsBtn" class="px-4 py-2 rounded-lg transition-all" style="background: var(--card-bg); color: var(--text); font-size: var(--font-size); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                   ← Back
                 </button>
                 <div class="text-center">
                   <div style="font-size:calc(var(--font-size) * 2);
  margin-bottom: 0.25rem;">${currentSubject.subject_icon}</div>
                   <h2 style="font-size:calc(var(--font-size) * 1.8);
- font-weight: 400; color: ${titleColor};">${currentSubject.subject_name}</h2>
+ font-weight: 400; color: var(--text);">${currentSubject.subject_name}</h2>
                 </div>
                 <div style="width: 50px;"></div>
               </div>
@@ -517,7 +507,7 @@ function renderSubjectsView() {
           </div>
         </div>
       `;
-    }
+}
 function renderCardsView() {
   if (!currentSet || !currentSet.set_id) {
     currentView = "sets";
@@ -534,7 +524,7 @@ function renderCardsView() {
         data-id="${card.id}"
         aria-label="Delete card"
       >
-        ×
+        <img src="icons/delete.svg" class="icon sm" />
       </button>
 
       <div class="card-section">
@@ -557,7 +547,7 @@ function renderCardsView() {
           <!-- HEADER -->
           <div class="cards-header slide-in">
             <button id="backToSetsBtn" class="btn-back">
-              ← Back
+              <img src="icons/back.svg" class="icon sm" />
             </button>
 
             <div class="cards-title">
@@ -619,34 +609,30 @@ function renderCardsView() {
 
 
 
-    function renderStudyView() {
-      const cards = getCardsForSet(currentSet.set_id);
-      if (cards.length === 0) {
-        currentView = 'cards';
-        renderApp();
-        return;
-      }
+function renderStudyView() {
+  const cards = getCardsForSet(currentSet.set_id);
+  if (cards.length === 0) {
+    currentView = 'cards';
+    renderApp();
+    return;
+  }
 
-      const card = cards[currentCardIndex];
-      const fontSize = config.font_size || 10;
-      const titleColor = config.text_color || defaultConfig.text_color;
-      const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
-      const primaryColor = config.primary_color || defaultConfig.primary_color;
-      const cardBg = config.card_background || defaultConfig.card_background;
-      const progress = ((currentCardIndex + 1) / cards.length) * 100;
+  const card = cards[currentCardIndex];
+  const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
+  const progress = ((currentCardIndex + 1) / cards.length) * 100;
 
-      return `
+  return `
         <div class="w-full h-full overflow-auto">
           <div class="min-h-full flex flex-col p-6">
             <div class="max-w-3xl w-full mx-auto flex flex-col" style="height: 100%;">
               <div class="flex items-center justify-between mb-6 slide-in">
-                <button id="backToCardsBtn" class="px-4 py-2 rounded-lg transition-all" style="background: ${cardBg}; color: ${titleColor}; font-size: var(--font-size);
+                <button id="backToCardsBtn" class="px-4 py-2 rounded-lg transition-all" style="background: var(--card-bg); color: var(--text); font-size: var(--font-size);
  box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                   ← Back
                 </button>
                 <div class="text-center">
                   <h2 style="font-size: calc(var(--font-size) * 1.5);
- font-weight: 400; color: ${titleColor};">${currentSet.set_name}</h2>
+ font-weight: 400; color: var(--text);">${currentSet.set_name}</h2>
                   <p style="font-size: calc(var(--font-size) * 0.875);
  color: ${subtitleColor};">Card ${currentCardIndex + 1} of ${cards.length}</p>
                 </div>
@@ -660,14 +646,14 @@ function renderCardsView() {
               <div class="flex-1 flex items-center justify-center mb-6">
                 <div class="card-3d w-full" style="max-width: 600px; height: 400px;">
                   <div id="cardInner" class="card-inner">
-                    <div class="card-front" style="background: ${cardBg}; box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
+                    <div class="card-front" style="background: var(--card-bg); box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
                       <div class="text-center">
                         <p style="font-size: calc(var(--font-size) * 1);
 
  color: var(--primary); font-weight: 400; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem;">Question</p>
                         <p style="font-size: calc(var(--font-size) * 1.75);
 
- color: ${titleColor}; font-weight: 400; line-height: 1.6;">${card.question}</p>
+ color: var(--text); font-weight: 400; line-height: 1.6;">${card.question}</p>
                       </div>
                     </div>
                     <div class="card-back" style="background: var(--primary);">
@@ -691,11 +677,11 @@ function renderCardsView() {
                 </button>
                 
                 <div class="flex gap-4">
-                  <button id="prevBtn" class="flex-1 py-3 rounded-xl transition-all" style="background: ${cardBg}; color: ${titleColor}; font-size: var(--font-size);
+                  <button id="prevBtn" class="flex-1 py-3 rounded-xl transition-all" style="background: var(--card-bg); color: var(--text); font-size: var(--font-size);
  box-shadow: 0 2px 8px rgba(0,0,0,0.08); opacity: ${currentCardIndex === 0 ? '0.5' : '1'}; cursor: ${currentCardIndex === 0 ? 'not-allowed' : 'pointer'};" ${currentCardIndex === 0 ? 'disabled' : ''}>
                     ← Previous
                   </button>
-                  <button id="nextBtn" class="flex-1 py-3 rounded-xl transition-all" style="background: ${cardBg}; color: ${titleColor}; font-size: var(--font-size);
+                  <button id="nextBtn" class="flex-1 py-3 rounded-xl transition-all" style="background: var(--card-bg); color: var(--text); font-size: var(--font-size);
  box-shadow: 0 2px 8px rgba(0,0,0,0.08); opacity: ${currentCardIndex === cards.length - 1 ? '0.5' : '1'}; cursor: ${currentCardIndex === cards.length - 1 ? 'not-allowed' : 'pointer'};" ${currentCardIndex === cards.length - 1 ? 'disabled' : ''}>
                     Next →
                   </button>
@@ -705,7 +691,7 @@ function renderCardsView() {
           </div>
         </div>
       `;
-    }
+}
 
 function generateQuizQuestions(cards) {
   return cards.map(card => {
@@ -730,7 +716,6 @@ function renderQuizView() {
   const q = quizQuestions[quizIndex];
   const progress = ((quizIndex + 1) / quizQuestions.length) * 100;
 
-  const fontSize = config.font_size || 14;
   const primary = config.primary_color;
   const bg = config.card_background;
   const text = config.text_color;
@@ -806,7 +791,6 @@ color:${text};line-height:1.6;">
 }
 
 function renderQuizResultView() {
-  const fontSize = config.font_size || 14;
   const primary = config.primary_color;
   const bg = config.card_background;
   const text = config.text_color;
@@ -847,35 +831,32 @@ color:${text};margin-bottom:24px;">
   `;
 }
 
-    function showAddSubjectModal() {
-      const fontSize = config.font_size || 12;
-      const titleColor = config.text_color || defaultConfig.text_color;
-      const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
-      const primaryColor = config.primary_color || defaultConfig.primary_color;
-      const cardBg = config.card_background || defaultConfig.card_background;
+function showAddSubjectModal() {
+  const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
+  const primaryColor = config.primary_color || defaultConfig.primary_color;
 
-      const modal = document.createElement('div');
-      modal.className = 'modal-overlay';
-      modal.innerHTML = `
-        <div class="modal-content" style="background: ${cardBg}; padding: 2rem;">
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+        <div class="modal-content" style="background: var(--card-bg); padding: 2rem;">
           <h2 style="font-size:calc(var(--font-size) * 1.8);
- font-weight: 400; color: ${titleColor}; margin-bottom: 1.5rem;">Add New Subject</h2>
+ font-weight: 400; color: var(--text); margin-bottom: 1.5rem;">Add New Subject</h2>
           
           <form id="addSubjectForm">
             <div style="margin-bottom: 1.5rem;">
               <label style="display: block; font-size: calc(var(--font-size) * 0.875);
- font-weight: 400; color: ${titleColor}; margin-bottom: 0.5rem;">Subject Name</label>
+ font-weight: 400; color: var(--text); margin-bottom: 0.5rem;">Subject Name</label>
               <input type="text" id="subjectNameInput" required style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: var(--radius); font-size: var(--font-size);
- color: ${titleColor};" placeholder="e.g., Biology, History...">
+ color: var(--text);" placeholder="e.g., Biology, History...">
             </div>
 
             <div style="margin-bottom: 1.5rem;">
               <label style="display: block; font-size: calc(var(--font-size) * 0.875);
- font-weight: 400; color: ${titleColor}; margin-bottom: 0.5rem;">Choose Icon</label>
+ font-weight: 400; color: var(--text); margin-bottom: 0.5rem;">Choose Icon</label>
               <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
                 ${emojiOptions.map((emoji, idx) => `
                   <button type="button" class="emoji-btn" data-emoji="${emoji}" style="padding: 0.75rem; border: 2px solid ${idx === 0 ? primaryColor : '#e2e8f0'}; border-radius: var(--radius); font-size: calc(var(--font-size) * 1.5);
- cursor: pointer; background: ${cardBg}; transition: all 0.2s;">
+ cursor: pointer; background: var(--card-bg); transition: all 0.2s;">
                     ${emoji}
                   </button>
                 `).join('')}
@@ -885,7 +866,7 @@ color:${text};margin-bottom:24px;">
 
             <div style="display: flex; gap: 1rem;">
               <button type="button" id="cancelSubjectBtn" style="flex: 1; padding: 0.75rem; border-radius: var(--radius); font-size: var(--font-size);
- background: #e2e8f0; color: ${titleColor}; border: none; cursor: pointer;">
+ background: #e2e8f0; color: var(--text); border: none; cursor: pointer;">
                 Cancel
               </button>
               <button type="submit" id="submitSubjectBtn" style="flex: 1; padding: 0.75rem; border-radius: var(--radius); font-size: var(--font-size);
@@ -897,70 +878,70 @@ color:${text};margin-bottom:24px;">
         </div>
       `;
 
-      document.body.appendChild(modal);
+  document.body.appendChild(modal);
 
-      const emojiButtons = modal.querySelectorAll('.emoji-btn');
-      const selectedEmojiInput = modal.querySelector('#selectedEmoji');
-      
-      emojiButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          emojiButtons.forEach(b => b.style.borderColor = '#e2e8f0');
-          btn.style.borderColor = primaryColor;
-          selectedEmojiInput.value = btn.dataset.emoji;
-        });
-      });
+  const emojiButtons = modal.querySelectorAll('.emoji-btn');
+  const selectedEmojiInput = modal.querySelector('#selectedEmoji');
 
-      modal.querySelector('#cancelSubjectBtn').addEventListener('click', () => {
-        modal.remove();
-      });
+  emojiButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      emojiButtons.forEach(b => b.style.borderColor = '#e2e8f0');
+      btn.style.borderColor = primaryColor;
+      selectedEmojiInput.value = btn.dataset.emoji;
+    });
+  });
 
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.remove();
-        }
-      });
+  modal.querySelector('#cancelSubjectBtn').addEventListener('click', () => {
+    modal.remove();
+  });
 
-      modal.querySelector('#addSubjectForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (allData.filter(d => d.type === 'subject').length >= 999) {
-          showToast('Maximum limit of 999 subjects reached');
-          return;
-        }
-
-        const submitBtn = modal.querySelector('#submitSubjectBtn');
-        const submitText = modal.querySelector('#submitSubjectText');
-        submitBtn.disabled = true;
-        submitText.innerHTML = '<span class="spinner"></span>';
-
-        const subjectName = modal.querySelector('#subjectNameInput').value;
-        const subjectIcon = selectedEmojiInput.value;
-        const subjectId = 'subj_' + Date.now();
-
-        const result = await window.dataSdk.create({
-          type: 'subject',
-          subject_id: subjectId,
-          subject_name: subjectName,
-          subject_icon: subjectIcon,
-          set_id: '',
-          set_name: '',
-          question: '',
-          answer: '',
-          created_at: new Date().toISOString()
-        });
-
-if (result.isOk) {
-  modal.remove();
-  renderApp();
-}
- else {
-          submitBtn.disabled = false;
-          submitText.textContent = 'Add Subject';
-          showToast('Failed to add subject. Please try again.');
-        }
-      });
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
     }
-     
+  });
+
+  modal.querySelector('#addSubjectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (allData.filter(d => d.type === 'subject').length >= 999) {
+      showToast('Maximum limit of 999 subjects reached');
+      return;
+    }
+
+    const submitBtn = modal.querySelector('#submitSubjectBtn');
+    const submitText = modal.querySelector('#submitSubjectText');
+    submitBtn.disabled = true;
+    submitText.innerHTML = '<span class="spinner"></span>';
+
+    const subjectName = modal.querySelector('#subjectNameInput').value;
+    const subjectIcon = selectedEmojiInput.value;
+    const subjectId = 'subj_' + Date.now();
+
+    const result = await window.dataSdk.create({
+      type: 'subject',
+      subject_id: subjectId,
+      subject_name: subjectName,
+      subject_icon: subjectIcon,
+      set_id: '',
+      set_name: '',
+      question: '',
+      answer: '',
+      created_at: new Date().toISOString()
+    });
+
+    if (result.isOk) {
+      modal.remove();
+      renderApp();
+    }
+    else {
+      submitBtn.disabled = false;
+      submitText.textContent = 'Add Subject';
+      showToast('Failed to add subject. Please try again.');
+    }
+  });
+}
+
 function importCardsFromJsonForCurrentSet() {
   if (!currentSet?.set_id) {
     showToast('No set selected');
@@ -1006,33 +987,30 @@ function importCardsFromJsonForCurrentSet() {
     }
   });
 
-  input.click(); 
+  input.click();
 }
 
-    function showAddSetModal() {
-      const fontSize = config.font_size || 12;
-      const titleColor = config.text_color || defaultConfig.text_color;
-      const primaryColor = config.primary_color || defaultConfig.primary_color;
-      const cardBg = config.card_background || defaultConfig.card_background;
+function showAddSetModal() {
 
-      const modal = document.createElement('div');
-      modal.className = 'modal-overlay';
-      modal.innerHTML = `
-        <div class="modal-content" style="background: ${cardBg}; padding: 2rem;">
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+        <div class="modal-content" style="background: var(--card-bg); padding: 2rem;">
           <h2 style="font-size:calc(var(--font-size) * 1.8);
- font-weight: 400; color: ${titleColor}; margin-bottom: 1.5rem;">Add New Set</h2>
+ font-weight: 400; color: var(--text); margin-bottom: 1.5rem;">Add New Set</h2>
           
           <form id="addSetForm">
             <div style="margin-bottom: 1.5rem;">
               <label for="setNameInput" style="display: block; font-size: calc(var(--font-size) * 0.875);
- font-weight: 400; color: ${titleColor}; margin-bottom: 0.5rem;">Set Name</label>
+ font-weight: 400; color: var(--text); margin-bottom: 0.5rem;">Set Name</label>
               <input type="text" id="setNameInput" required style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: var(--radius); font-size: var(--font-size);
- color: ${titleColor};" placeholder="e.g., Chapter 1, Vocabulary...">
+ color: var(--text);" placeholder="e.g., Chapter 1, Vocabulary...">
             </div>
 
             <div style="display: flex; gap: 1rem;">
               <button type="button" id="cancelSetBtn" style="flex: 1; padding: 0.75rem; border-radius: var(--radius); font-size: var(--font-size);
- background: #e2e8f0; color: ${titleColor}; border: none; cursor: pointer;">
+ background: #e2e8f0; color: var(--text); border: none; cursor: pointer;">
                 Cancel
               </button>
               <button type="submit" id="submitSetBtn" style="flex: 1; padding: 0.75rem; border-radius: var(--radius); font-size: var(--font-size);
@@ -1044,87 +1022,83 @@ function importCardsFromJsonForCurrentSet() {
         </div>
       `;
 
-      document.body.appendChild(modal);
+  document.body.appendChild(modal);
 
-      modal.querySelector('#cancelSetBtn').addEventListener('click', () => {
-        modal.remove();
-      });
+  modal.querySelector('#cancelSetBtn').addEventListener('click', () => {
+    modal.remove();
+  });
 
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.remove();
-        }
-      });
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
 
-      modal.querySelector('#addSetForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (allData.filter(d => d.type === 'set').length >= 999) {
-          showToast('Maximum limit of 999 sets reached');
-          return;
-        }
+  modal.querySelector('#addSetForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const submitBtn = modal.querySelector('#submitSetBtn');
-        const submitText = modal.querySelector('#submitSetText');
-        submitBtn.disabled = true;
-        submitText.innerHTML = '<span class="spinner"></span>';
-
-        const setName = modal.querySelector('#setNameInput').value;
-        const setId = 'set_' + Date.now();
-
-        const result = await window.dataSdk.create({
-          type: 'set',
-          subject_id: currentSubject.subject_id,
-          subject_name: '',
-          subject_icon: '',
-          set_id: setId,
-          set_name: setName,
-          question: '',
-          answer: '',
-          created_at: new Date().toISOString()
-        });
-
-        if (result.isOk) {
-          modal.remove();
-        } else {
-          submitBtn.disabled = false;
-          submitText.textContent = 'Add Set';
-          showToast('Failed to add set. Please try again.');
-        }
-      });
+    if (allData.filter(d => d.type === 'set').length >= 999) {
+      showToast('Maximum limit of 999 sets reached');
+      return;
     }
 
-    function showAddCardModal() {
-      const fontSize = config.font_size || 12;
-      const titleColor = config.text_color || defaultConfig.text_color;
-      const primaryColor = config.primary_color || defaultConfig.primary_color;
-      const cardBg = config.card_background || defaultConfig.card_background;
+    const submitBtn = modal.querySelector('#submitSetBtn');
+    const submitText = modal.querySelector('#submitSetText');
+    submitBtn.disabled = true;
+    submitText.innerHTML = '<span class="spinner"></span>';
 
-      const modal = document.createElement('div');
-      modal.className = 'modal-overlay';
-      modal.innerHTML = `
-        <div class="modal-content" style="background: ${cardBg}; padding: 2rem;">
+    const setName = modal.querySelector('#setNameInput').value;
+    const setId = 'set_' + Date.now();
+
+    const result = await window.dataSdk.create({
+      type: 'set',
+      subject_id: currentSubject.subject_id,
+      subject_name: '',
+      subject_icon: '',
+      set_id: setId,
+      set_name: setName,
+      question: '',
+      answer: '',
+      created_at: new Date().toISOString()
+    });
+
+    if (result.isOk) {
+      modal.remove();
+    } else {
+      submitBtn.disabled = false;
+      submitText.textContent = 'Add Set';
+      showToast('Failed to add set. Please try again.');
+    }
+  });
+}
+
+function showAddCardModal() {
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+        <div class="modal-content" style="background: var(--card-bg); padding: 2rem;">
           <h2 style="font-size:calc(var(--font-size) * 1.8);
- font-weight: 400; color: ${titleColor}; margin-bottom: 1.5rem;">Add New Card</h2>
+ font-weight: 400; color: var(--text); margin-bottom: 1.5rem;">Add New Card</h2>
           
           <form id="addCardForm">
             <div style="margin-bottom: 1.5rem;">
               <label for="questionInput" style="display: block; font-size: calc(var(--font-size) * 0.875);
- font-weight: 400; color: ${titleColor}; margin-bottom: 0.5rem;">Question</label>
+ font-weight: 400; color: var(--text); margin-bottom: 0.5rem;">Question</label>
               <textarea id="questionInput" required rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: var(--radius); font-size: var(--font-size);
- color: ${titleColor}; resize: vertical;" placeholder="Enter the question..."></textarea>
+ color: var(--text); resize: vertical;" placeholder="Enter the question..."></textarea>
             </div>
 
             <div style="margin-bottom: 1.5rem;">
               <label for="answerInput" style="display: block; font-size: calc(var(--font-size) * 0.875);
- font-weight: 400; color: ${titleColor}; margin-bottom: 0.5rem;">Answer</label>
+ font-weight: 400; color: var(--text); margin-bottom: 0.5rem;">Answer</label>
               <textarea id="answerInput" required rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: var(--radius); font-size: var(--font-size);
- color: ${titleColor}; resize: vertical;" placeholder="Enter the answer..."></textarea>
+ color: var(--text); resize: vertical;" placeholder="Enter the answer..."></textarea>
             </div>
 
             <div style="display: flex; gap: 1rem;">
               <button type="button" id="cancelCardBtn" style="flex: 1; padding: 0.75rem; border-radius: var(--radius); font-size: var(--font-size);
- background: #e2e8f0; color: ${titleColor}; border: none; cursor: pointer;">
+ background: #e2e8f0; color: var(--text); border: none; cursor: pointer;">
                 Cancel
               </button>
               <button type="submit" id="submitCardBtn" style="flex: 1; padding: 0.75rem; border-radius: var(--radius); font-size: var(--font-size);
@@ -1136,118 +1110,118 @@ function importCardsFromJsonForCurrentSet() {
         </div>
       `;
 
-      document.body.appendChild(modal);
+  document.body.appendChild(modal);
 
-      modal.querySelector('#cancelCardBtn').addEventListener('click', () => {
-        modal.remove();
-      });
+  modal.querySelector('#cancelCardBtn').addEventListener('click', () => {
+    modal.remove();
+  });
 
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.remove();
-        }
-      });
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
 
-      modal.querySelector('#addCardForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (allData.filter(d => d.type === 'card').length >= 999) {
-          showToast('Maximum limit of 999 cards reached');
-          return;
-        }
+  modal.querySelector('#addCardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const submitBtn = modal.querySelector('#submitCardBtn');
-        const submitText = modal.querySelector('#submitCardText');
-        submitBtn.disabled = true;
-        submitText.innerHTML = '<span class="spinner"></span>';
-
-        const question = modal.querySelector('#questionInput').value;
-        const answer = modal.querySelector('#answerInput').value;
-
-        const result = await window.dataSdk.create({
-  type: 'card',
-  subject_id: currentSubject.subject_id,
-  subject_name: currentSubject.subject_name,
-  subject_icon: currentSubject.subject_icon,
-  set_id: currentSet.set_id,
-  set_name: currentSet.set_name,
-  question: question,
-  answer: answer,
-  created_at: new Date().toISOString()
-});
-
-
-        if (result.isOk) {
-          modal.remove();
-        } else {
-          submitBtn.disabled = false;
-          submitText.textContent = 'Add Card';
-          showToast('Failed to add card. Please try again.');
-        }
-      });
+    if (allData.filter(d => d.type === 'card').length >= 999) {
+      showToast('Maximum limit of 999 cards reached');
+      return;
     }
 
-    async function generateCardsWithAI(topic, count) {
-       if (!navigator.onLine) {
-  showToast("AI generation requires internet");
-  return;
+    const submitBtn = modal.querySelector('#submitCardBtn');
+    const submitText = modal.querySelector('#submitCardText');
+    submitBtn.disabled = true;
+    submitText.innerHTML = '<span class="spinner"></span>';
+
+    const question = modal.querySelector('#questionInput').value;
+    const answer = modal.querySelector('#answerInput').value;
+
+    const result = await window.dataSdk.create({
+      type: 'card',
+      subject_id: currentSubject.subject_id,
+      subject_name: currentSubject.subject_name,
+      subject_icon: currentSubject.subject_icon,
+      set_id: currentSet.set_id,
+      set_name: currentSet.set_name,
+      question: question,
+      answer: answer,
+      created_at: new Date().toISOString()
+    });
+
+
+    if (result.isOk) {
+      modal.remove();
+    } else {
+      submitBtn.disabled = false;
+      submitText.textContent = 'Add Card';
+      showToast('Failed to add card. Please try again.');
+    }
+  });
 }
 
-      if (!currentSet?.set_id) {
-        showToast("No set selected");
-        return false;
-      }
+async function generateCardsWithAI(topic, count) {
+  if (!navigator.onLine) {
+    showToast("AI generation requires internet");
+    return;
+  }
 
-      showAILoading();
+  if (!currentSet?.set_id) {
+    showToast("No set selected");
+    return false;
+  }
 
-      try {
-        const res = await fetch(AI_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic, count })
-        });
+  showAILoading();
 
-        if (!res.ok) {
-          throw new Error(`API request failed with status ${res.status}`);
-        }
+  try {
+    const res = await fetch(AI_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic, count })
+    });
 
-        const json = await res.json();
+    if (!res.ok) {
+      throw new Error(`API request failed with status ${res.status}`);
+    }
 
-        if (!Array.isArray(json.cards)) {
-          throw new Error("Invalid AI response");
-        }
+    const json = await res.json();
 
-        // Create all cards sequentially
-        for (const card of json.cards) {
-          const result = await window.dataSdk.create({
-            type: "card",
-            subject_id: currentSubject?.subject_id || "",
-            subject_name: currentSubject?.subject_name || "",
-            subject_icon: currentSubject?.subject_icon || "",
-            set_id: currentSet.set_id,
-            set_name: currentSet.set_name || "",
-            question: card.question,
-            answer: card.answer,
-            created_at: new Date().toISOString()
-          });
+    if (!Array.isArray(json.cards)) {
+      throw new Error("Invalid AI response");
+    }
 
-          if (result.isError) {
-            throw new Error("Failed to create card");
-          }
-        }
+    // Create all cards sequentially
+    for (const card of json.cards) {
+      const result = await window.dataSdk.create({
+        type: "card",
+        subject_id: currentSubject?.subject_id || "",
+        subject_name: currentSubject?.subject_name || "",
+        subject_icon: currentSubject?.subject_icon || "",
+        set_id: currentSet.set_id,
+        set_name: currentSet.set_name || "",
+        question: card.question,
+        answer: card.answer,
+        created_at: new Date().toISOString()
+      });
 
-        // UI update happens in onDataChanged when data changes are detected
-        hideAILoading();
-        showToast(`Successfully generated ${json.cards.length} cards`);
-        return true;
-
-      } catch (error) {
-        hideAILoading();
-        showToast("Failed to generate cards. Please try again.");
-        console.error("AI generation error:", error);
-        return false;
+      if (result.isError) {
+        throw new Error("Failed to create card");
       }
     }
+
+    // UI update happens in onDataChanged when data changes are detected
+    hideAILoading();
+    showToast(`Successfully generated ${json.cards.length} cards`);
+    return true;
+
+  } catch (error) {
+    hideAILoading();
+    showToast("Failed to generate cards. Please try again.");
+    console.error("AI generation error:", error);
+    return false;
+  }
+}
 
 function showAIGenerateModal() {
   if (document.querySelector(".modal-overlay")) return;
@@ -1312,25 +1286,24 @@ function showAIGenerateModal() {
 
 
 
-   
+
 async function loadAllData() {
   allData = window.dataSdk.getAll();
 }
 
 let aiLoadingEl = null;
 
-    function showAILoading() {
-      document.getElementById('aiLoading').classList.add('show');
-    }
+function showAILoading() {
+  document.getElementById('aiLoading').classList.add('show');
+}
 
-    function hideAILoading() {
-      document.getElementById('aiLoading').classList.remove('show');
-    }
+function hideAILoading() {
+  document.getElementById('aiLoading').classList.remove('show');
+}
 
 
 
-   function showToast(message) {
-  const fontSize = config.font_size || 12;
+function showToast(message) {
 
   // Try to reuse existing toast
   let toast = document.getElementById('toast');
@@ -1369,357 +1342,357 @@ let aiLoadingEl = null;
   }, 3000);
 }
 
-    function attachEventListeners() {
-      const addSubjectBtn = document.getElementById('addSubjectBtn');
-      if (addSubjectBtn) {
-        addSubjectBtn.addEventListener('click', showAddSubjectModal);
-      }
+function attachEventListeners() {
+  const addSubjectBtn = document.getElementById('addSubjectBtn');
+  if (addSubjectBtn) {
+    addSubjectBtn.addEventListener('click', showAddSubjectModal);
+  }
 
-      const addSetBtn = document.getElementById('addSetBtn');
-      if (addSetBtn) {
-        addSetBtn.addEventListener('click', showAddSetModal);
-      }
+  const addSetBtn = document.getElementById('addSetBtn');
+  if (addSetBtn) {
+    addSetBtn.addEventListener('click', showAddSetModal);
+  }
 
-      const addCardBtn = document.getElementById('addCardBtn');
-      if (addCardBtn) {
-        addCardBtn.addEventListener('click', showAddCardModal);
-      }
+  const addCardBtn = document.getElementById('addCardBtn');
+  if (addCardBtn) {
+    addCardBtn.addEventListener('click', showAddCardModal);
+  }
 
-      const importCardsJsonBtn = document.getElementById('importCardsJsonBtn');
-     if (importCardsJsonBtn) {
-      importCardsJsonBtn.addEventListener('click', importCardsFromJsonForCurrentSet);
-     }
+  const importCardsJsonBtn = document.getElementById('importCardsJsonBtn');
+  if (importCardsJsonBtn) {
+    importCardsJsonBtn.addEventListener('click', importCardsFromJsonForCurrentSet);
+  }
 
-      const categoryCards = document.querySelectorAll('.category-card');
-      categoryCards.forEach(card => {
-        if (card.dataset.subjectId) {
-          card.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('delete-subject-btn')) {
-              const subjectId = card.dataset.subjectId;
-              currentSubject = getSubjects().find(s => s.subject_id === subjectId);
-              currentView = 'sets';
-              renderApp();
-            }
-          });
-        } else if (card.dataset.setId) {
-          card.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('delete-set-btn') && !e.target.classList.contains('study-set-btn')) {
-              const setId = card.dataset.setId;
-              currentSet = getSetsForSubject(currentSubject.subject_id).find(s => s.set_id === setId);
-              currentView = 'cards';
-              renderApp();
-            }
-          });
-        }
-      });
-
-      const deleteSubjectBtns = document.querySelectorAll('.delete-subject-btn');
-      deleteSubjectBtns.forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const subjectId = btn.dataset.subjectId;
-          const subject = allData.find(d => d.type === 'subject' && d.subject_id === subjectId);
-          
-          btn.disabled = true;
-          btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span>';
-
-          const itemsToDelete = allData.filter(d => 
-            (d.type === 'subject' && d.subject_id === subjectId) ||
-            (d.type === 'set' && d.subject_id === subjectId) ||
-            (d.type === 'card' && allData.some(s => s.type === 'set' && s.set_id === d.set_id && s.subject_id === subjectId))
-          );
-         
-         for (const item of itemsToDelete) {
-          await window.dataSdk.delete({ id: item.id }, true);
-         }
-         window.dataSdk.init(dataHandler); // reload + notify cleanly
-
-          if (currentSubject?.subject_id === subjectId) {
-              currentSubject = null;
-              currentView = 'subjects';
-           }
-        });
-      });
-
-      const deleteSetBtns = document.querySelectorAll('.delete-set-btn');
-      deleteSetBtns.forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const setId = btn.dataset.setId;
-          
-          btn.disabled = true;
-          btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span>';
-
-          const itemsToDelete = allData.filter(d => 
-            (d.type === 'set' && d.set_id === setId) ||
-            (d.type === 'card' && d.set_id === setId)
-          );
-
-          for (const item of itemsToDelete) {
-            await window.dataSdk.delete({ id: item.id });
-          }
-        });
-      });
-     
-     const deleteCardBtns = document.querySelectorAll('.delete-card-btn');
-     deleteCardBtns.forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-       e.stopPropagation();
-       
-       const id = btn.dataset.id;
-       
-       btn.disabled = true;
-       btn.innerHTML =
-        '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>';
-       await window.dataSdk.delete({ id });
-      });
-     });
-
-
-      const studySetBtns = document.querySelectorAll('.study-set-btn');
-      studySetBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const setId = btn.dataset.setId;
-          currentSet = getSetsForSubject(currentSubject.subject_id).find(s => s.set_id === setId);
-          currentCardIndex = 0;
-          isFlipped = false;
-          currentView = 'study';
-          renderApp();
-        });
-      });
-
-      const studyCardsBtn = document.getElementById('studyCardsBtn');
-      if (studyCardsBtn) {
-        studyCardsBtn.addEventListener('click', () => {
-          currentCardIndex = 0;
-          isFlipped = false;
-          currentView = 'study';
-          renderApp();
-        });
-      }
-       
-       const quizBtn = document.getElementById('quizCardsBtn');
-       if (quizBtn) {
-          quizBtn.addEventListener('click', () => {
-             const cards = getCardsForSet(currentSet.set_id);
-             quizQuestions = generateQuizQuestions(cards);
-             quizIndex = 0;
-             quizScore = 0;
-             currentView = 'quiz';
-             renderApp();
-          });
-       }
-
-      const backToSubjectsBtn = document.getElementById('backToSubjectsBtn');
-      if (backToSubjectsBtn) {
-        backToSubjectsBtn.addEventListener('click', () => {
-          currentView = 'subjects';
-          currentSubject = null;
-          renderApp();
-        });
-      }
-
-      const backToSetsBtn = document.getElementById('backToSetsBtn');
-      if (backToSetsBtn) {
-        backToSetsBtn.addEventListener('click', () => {
+  const categoryCards = document.querySelectorAll('.category-card');
+  categoryCards.forEach(card => {
+    if (card.dataset.subjectId) {
+      card.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('delete-subject-btn')) {
+          const subjectId = card.dataset.subjectId;
+          currentSubject = getSubjects().find(s => s.subject_id === subjectId);
           currentView = 'sets';
-          currentSet = null;
           renderApp();
-        });
-      }
-
-      const backToCardsBtn = document.getElementById('backToCardsBtn');
-      if (backToCardsBtn) {
-        backToCardsBtn.addEventListener('click', () => {
+        }
+      });
+    } else if (card.dataset.setId) {
+      card.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('delete-set-btn') && !e.target.classList.contains('study-set-btn')) {
+          const setId = card.dataset.setId;
+          currentSet = getSetsForSubject(currentSubject.subject_id).find(s => s.set_id === setId);
           currentView = 'cards';
-          currentCardIndex = 0;
-          isFlipped = false;
           renderApp();
-        });
-      }
-
-      const flipBtn = document.getElementById('flipBtn');
-      if (flipBtn) {
-        flipBtn.addEventListener('click', () => {
-          const cardInner = document.getElementById('cardInner');
-          isFlipped = !isFlipped;
-          if (isFlipped) {
-            cardInner.classList.add('flipped');
-          } else {
-            cardInner.classList.remove('flipped');
-          }
-        });
-      }
-
-      const prevBtn = document.getElementById('prevBtn');
-      if (prevBtn && currentCardIndex > 0) {
-        prevBtn.addEventListener('click', () => {
-          currentCardIndex--;
-          isFlipped = false;
-          renderApp();
-        });
-      }
-
-      const nextBtn = document.getElementById('nextBtn');
-      const cards = getCardsForSet(currentSet?.set_id || '');
-      if (nextBtn && currentCardIndex < cards.length - 1) {
-        nextBtn.addEventListener('click', () => {
-          currentCardIndex++;
-          isFlipped = false;
-          renderApp();
-        });
-      }
-const aiGenerateBtn = document.getElementById("aiGenerateBtn");
-
-if (aiGenerateBtn) {
-  aiGenerateBtn.addEventListener("click", () => {
-    showAIGenerateModal();
-  });
-}
-       // QUIZ option click handlers
-if (currentView === 'quiz') {
-document.querySelectorAll(".quiz-option").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const selected = btn.dataset.answer;
-    const correct = quizQuestions[quizIndex].correct;
-
-    // Disable all options
-    document.querySelectorAll(".quiz-option").forEach(b => {
-      b.classList.add("disabled");
-    });
-
-    // Mark answers
-    if (selected === correct) {
-      btn.classList.add("correct");
-      quizScore++;
-    } else {
-      btn.classList.add("wrong");
-
-      document.querySelectorAll(".quiz-option").forEach(b => {
-        if (b.dataset.answer === correct) {
-          b.classList.add("correct");
         }
       });
     }
+  });
 
-    // Next question delay
-    setTimeout(() => {
-      quizIndex++;
+  const deleteSubjectBtns = document.querySelectorAll('.delete-subject-btn');
+  deleteSubjectBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const subjectId = btn.dataset.subjectId;
+      const subject = allData.find(d => d.type === 'subject' && d.subject_id === subjectId);
 
-      if (quizIndex >= quizQuestions.length) {
-        currentView = "quiz-result";
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span>';
+
+      const itemsToDelete = allData.filter(d =>
+        (d.type === 'subject' && d.subject_id === subjectId) ||
+        (d.type === 'set' && d.subject_id === subjectId) ||
+        (d.type === 'card' && allData.some(s => s.type === 'set' && s.set_id === d.set_id && s.subject_id === subjectId))
+      );
+
+      for (const item of itemsToDelete) {
+        await window.dataSdk.delete({ id: item.id }, true);
       }
+      window.dataSdk.init(dataHandler); // reload + notify cleanly
 
-      renderApp();
-    }, 800);
+      if (currentSubject?.subject_id === subjectId) {
+        currentSubject = null;
+        currentView = 'subjects';
+      }
+    });
   });
-});
-}
-const exitQuizBtn = document.getElementById('exitQuizBtn');
-if (exitQuizBtn) {
-  exitQuizBtn.addEventListener('click', () => {
-    currentView = 'cards';
-    renderApp();
+
+  const deleteSetBtns = document.querySelectorAll('.delete-set-btn');
+  deleteSetBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const setId = btn.dataset.setId;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span>';
+
+      const itemsToDelete = allData.filter(d =>
+        (d.type === 'set' && d.set_id === setId) ||
+        (d.type === 'card' && d.set_id === setId)
+      );
+
+      for (const item of itemsToDelete) {
+        await window.dataSdk.delete({ id: item.id });
+      }
+    });
   });
-}
 
-    }
+  const deleteCardBtns = document.querySelectorAll('.delete-card-btn');
+  deleteCardBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
 
-    function adjustColor(color, amount) {
-      const num = parseInt(color.slice(1), 16);
-      const r = Math.max(0, Math.min(255, (num >> 16) + amount));
-      const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
-      const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
-      return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-    }
+      const id = btn.dataset.id;
 
-    async function onConfigChange(newConfig) {
-      Object.assign(config, newConfig);
+      btn.disabled = true;
+      btn.innerHTML =
+        '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>';
+      await window.dataSdk.delete({ id });
+    });
+  });
+
+
+  const studySetBtns = document.querySelectorAll('.study-set-btn');
+  studySetBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const setId = btn.dataset.setId;
+      currentSet = getSetsForSubject(currentSubject.subject_id).find(s => s.set_id === setId);
+      currentCardIndex = 0;
+      isFlipped = false;
+      currentView = 'study';
       renderApp();
-    }
+    });
+  });
 
-    function mapToCapabilities(cfg) {
-      return {
-        recolorables: [
-          {
-            get: () => cfg.background_color || defaultConfig.background_color,
-            set: (value) => {
-              cfg.background_color = value;
-              window.elementSdk.setConfig({ background_color: value });
-            }
-          },
-          {
-            get: () => cfg.card_background || defaultConfig.card_background,
-            set: (value) => {
-              cfg.card_background = value;
-              window.elementSdk.setConfig({ card_background: value });
-            }
-          },
-          {
-            get: () => cfg.text_color || defaultConfig.text_color,
-            set: (value) => {
-              cfg.text_color = value;
-              window.elementSdk.setConfig({ text_color: value });
-            }
-          },
-          {
-            get: () => cfg.primary_color || defaultConfig.primary_color,
-            set: (value) => {
-              cfg.primary_color = value;
-              window.elementSdk.setConfig({ primary_color: value });
-            }
-          },
-          {
-            get: () => cfg.secondary_color || defaultConfig.secondary_color,
-            set: (value) => {
-              cfg.secondary_color = value;
-              window.elementSdk.setConfig({ secondary_color: value });
-            }
-          }
-        ],
-        borderables: [],
-        fontEditable: {
-          get: () => cfg.font_family || 'system-ui',
-          set: (value) => {
-            cfg.font_family = value;
-            window.elementSdk.setConfig({ font_family: value });
-          }
-        },
-        fontSizeable: {
-          get: () => cfg.font_size || 16,
-          set: (value) => {
-            cfg.font_size = value;
-            window.elementSdk.setConfig({ font_size: value });
-          }
-        }
-      };
-    }
+  const studyCardsBtn = document.getElementById('studyCardsBtn');
+  if (studyCardsBtn) {
+    studyCardsBtn.addEventListener('click', () => {
+      currentCardIndex = 0;
+      isFlipped = false;
+      currentView = 'study';
+      renderApp();
+    });
+  }
 
-    function mapToEditPanelValues(cfg) {
-      return new Map([
-        ["app_title", cfg.app_title || defaultConfig.app_title],
-        ["app_subtitle", cfg.app_subtitle || defaultConfig.app_subtitle]
-      ]);
-    }
+  const quizBtn = document.getElementById('quizCardsBtn');
+  if (quizBtn) {
+    quizBtn.addEventListener('click', () => {
+      const cards = getCardsForSet(currentSet.set_id);
+      quizQuestions = generateQuizQuestions(cards);
+      quizIndex = 0;
+      quizScore = 0;
+      currentView = 'quiz';
+      renderApp();
+    });
+  }
 
-    (async () => {
-      if (window.elementSdk) {
-        window.elementSdk.init({
-          defaultConfig,
-          onConfigChange,
-          mapToCapabilities,
-          mapToEditPanelValues
+  const backToSubjectsBtn = document.getElementById('backToSubjectsBtn');
+  if (backToSubjectsBtn) {
+    backToSubjectsBtn.addEventListener('click', () => {
+      currentView = 'subjects';
+      currentSubject = null;
+      renderApp();
+    });
+  }
+
+  const backToSetsBtn = document.getElementById('backToSetsBtn');
+  if (backToSetsBtn) {
+    backToSetsBtn.addEventListener('click', () => {
+      currentView = 'sets';
+      currentSet = null;
+      renderApp();
+    });
+  }
+
+  const backToCardsBtn = document.getElementById('backToCardsBtn');
+  if (backToCardsBtn) {
+    backToCardsBtn.addEventListener('click', () => {
+      currentView = 'cards';
+      currentCardIndex = 0;
+      isFlipped = false;
+      renderApp();
+    });
+  }
+
+  const flipBtn = document.getElementById('flipBtn');
+  if (flipBtn) {
+    flipBtn.addEventListener('click', () => {
+      const cardInner = document.getElementById('cardInner');
+      isFlipped = !isFlipped;
+      if (isFlipped) {
+        cardInner.classList.add('flipped');
+      } else {
+        cardInner.classList.remove('flipped');
+      }
+    });
+  }
+
+  const prevBtn = document.getElementById('prevBtn');
+  if (prevBtn && currentCardIndex > 0) {
+    prevBtn.addEventListener('click', () => {
+      currentCardIndex--;
+      isFlipped = false;
+      renderApp();
+    });
+  }
+
+  const nextBtn = document.getElementById('nextBtn');
+  const cards = getCardsForSet(currentSet?.set_id || '');
+  if (nextBtn && currentCardIndex < cards.length - 1) {
+    nextBtn.addEventListener('click', () => {
+      currentCardIndex++;
+      isFlipped = false;
+      renderApp();
+    });
+  }
+  const aiGenerateBtn = document.getElementById("aiGenerateBtn");
+
+  if (aiGenerateBtn) {
+    aiGenerateBtn.addEventListener("click", () => {
+      showAIGenerateModal();
+    });
+  }
+  // QUIZ option click handlers
+  if (currentView === 'quiz') {
+    document.querySelectorAll(".quiz-option").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const selected = btn.dataset.answer;
+        const correct = quizQuestions[quizIndex].correct;
+
+        // Disable all options
+        document.querySelectorAll(".quiz-option").forEach(b => {
+          b.classList.add("disabled");
         });
-      }
 
-      if (window.dataSdk) {
-        const initResult = await window.dataSdk.init(dataHandler);
-        if (!initResult.isOk) {
-          console.error('Failed to initialize data SDK');
+        // Mark answers
+        if (selected === correct) {
+          btn.classList.add("correct");
+          quizScore++;
+        } else {
+          btn.classList.add("wrong");
+
+          document.querySelectorAll(".quiz-option").forEach(b => {
+            if (b.dataset.answer === correct) {
+              b.classList.add("correct");
+            }
+          });
+        }
+
+        // Next question delay
+        setTimeout(() => {
+          quizIndex++;
+
+          if (quizIndex >= quizQuestions.length) {
+            currentView = "quiz-result";
+          }
+
+          renderApp();
+        }, 800);
+      });
+    });
+  }
+  const exitQuizBtn = document.getElementById('exitQuizBtn');
+  if (exitQuizBtn) {
+    exitQuizBtn.addEventListener('click', () => {
+      currentView = 'cards';
+      renderApp();
+    });
+  }
+
+}
+
+function adjustColor(color, amount) {
+  const num = parseInt(color.slice(1), 16);
+  const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+  const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
+async function onConfigChange(newConfig) {
+  Object.assign(config, newConfig);
+  renderApp();
+}
+
+function mapToCapabilities(cfg) {
+  return {
+    recolorables: [
+      {
+        get: () => cfg.background_color || defaultConfig.background_color,
+        set: (value) => {
+          cfg.background_color = value;
+          window.elementSdk.setConfig({ background_color: value });
+        }
+      },
+      {
+        get: () => cfg.card_background || defaultConfig.card_background,
+        set: (value) => {
+          cfg.card_background = value;
+          window.elementSdk.setConfig({ card_background: value });
+        }
+      },
+      {
+        get: () => cfg.text_color || defaultConfig.text_color,
+        set: (value) => {
+          cfg.text_color = value;
+          window.elementSdk.setConfig({ text_color: value });
+        }
+      },
+      {
+        get: () => cfg.primary_color || defaultConfig.primary_color,
+        set: (value) => {
+          cfg.primary_color = value;
+          window.elementSdk.setConfig({ primary_color: value });
+        }
+      },
+      {
+        get: () => cfg.secondary_color || defaultConfig.secondary_color,
+        set: (value) => {
+          cfg.secondary_color = value;
+          window.elementSdk.setConfig({ secondary_color: value });
         }
       }
-    })();
+    ],
+    borderables: [],
+    fontEditable: {
+      get: () => cfg.font_family || 'system-ui',
+      set: (value) => {
+        cfg.font_family = value;
+        window.elementSdk.setConfig({ font_family: value });
+      }
+    },
+    fontSizeable: {
+      get: () => cfg.font_size || 16,
+      set: (value) => {
+        cfg.font_size = value;
+        window.elementSdk.setConfig({ font_size: value });
+      }
+    }
+  };
+}
+
+function mapToEditPanelValues(cfg) {
+  return new Map([
+    ["app_title", cfg.app_title || defaultConfig.app_title],
+    ["app_subtitle", cfg.app_subtitle || defaultConfig.app_subtitle]
+  ]);
+}
+
+(async () => {
+  if (window.elementSdk) {
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange,
+      mapToCapabilities,
+      mapToEditPanelValues
+    });
+  }
+
+  if (window.dataSdk) {
+    const initResult = await window.dataSdk.init(dataHandler);
+    if (!initResult.isOk) {
+      console.error('Failed to initialize data SDK');
+    }
+  }
+})();
 
 window.addEventListener("beforeinstallprompt", e => {
   console.log("✅ beforeinstallprompt fired");
