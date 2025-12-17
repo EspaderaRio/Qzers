@@ -19,7 +19,9 @@
           "backdrop-filter",
           "-webkit-overflow-scrolling",
           "scrollbar-width",
-          "scrollbar-width: none"
+          "scrollbar-width: none",
+          "color: color-mix(in srgb, var(--text), transparent 40%)",
+          "color: color-mix(in srgb, var(--text), transparent 45%)"
         ]
       }
     ]

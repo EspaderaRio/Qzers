@@ -363,70 +363,87 @@ async function onConfigChange(newConfig) {
       attachEventListeners();
     }
 
-    function renderSubjectsView() {
-      const subjects = getSubjects();
-      const fontSize = config.font_size || 12;
-      const titleColor = config.text_color || defaultConfig.text_color;
-      const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
-      const primaryColor = config.primary_color || defaultConfig.primary_color;
-      const cardBg = config.card_background || defaultConfig.card_background;
+function renderSubjectsView() {
+  const subjects = getSubjects();
 
-      const subjectsHTML = subjects.map(subject => {
-      const sets = getSetsForSubject(subject.subject_id);
-       return `
-          <div class="category-card p-6 rounded-2xl" data-subject-id="${subject.subject_id}" style="background: ${cardBg}; border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative;">
-            <button class="delete-subject-btn" data-subject-id="${subject.subject_id}" style="position: absolute; top: 0.75rem; right: 0.75rem; color: ${subtitleColor}; font-size: calc(var(--font-size) * 1.2);
- background: none; border: none; cursor: pointer; padding: 0.25rem; line-height: 1;">×</button>
-            <div class="flex items-center mb-3">
-              <div class="w-12 h-12 rounded-full flex items-center justify-center mr-4" style="background: linear-gradient(135deg, var(--primary), ${adjustColor(primaryColor, -20)});">
-                <span style="font-size: calc(var(--font-size) * 1.5);">${subject.subject_icon}</span>
-              </div>
-              <div>
-                <h2 style="font-size: calc(var(--font-size) * 1.5);
- font-weight: 400; color: ${titleColor};">${subject.subject_name}</h2>
-                <p style="font-size: calc(var(--font-size) * 0.875); color: ${subtitleColor};">${sets.length} set${sets.length !== 1 ? 's' : ''}</p>
-              </div>
-            </div>
+  const subjectsHTML = subjects.map(subject => {
+    const sets = getSetsForSubject(subject.subject_id);
+
+    return `
+      <div
+        class="category-card"
+        data-subject-id="${subject.subject_id}"
+      >
+        <button
+          class="delete-subject-btn"
+          data-subject-id="${subject.subject_id}"
+          aria-label="Delete subject"
+        >
+          ×
+        </button>
+
+        <div class="category-header">
+          <div class="category-icon">
+            <span class="category-icon-text">
+              ${subject.subject_icon}
+            </span>
           </div>
-        `;
-      }).join('');
-     
-      return `
-        <div class="w-full h-full overflow-auto">
-          <div class="min-h-full flex flex-col p-8">
-            <div class="max-w-4xl w-full mx-auto fade-in">
-              <div class="text-center mb-12">
-                <h1 class="mb-4" style="font-size: calc(var(--font-size) * 2.5);
- font-weight: 700; color: ${titleColor};">
-                  ${config.app_title || defaultConfig.app_title}
-                </h1>
-                <p style="font-size: calc(var(--font-size) * 1.1); color: ${subtitleColor};">
-                  ${config.app_subtitle || defaultConfig.app_subtitle}
-                </p>
-              </div>
-              
-              <div class="mb-6">
-                <button id="addSubjectBtn" class="w-full py-4 rounded-xl transition-all font-semibold" style="background: var(--primary); color: white; font-size: calc(var(--font-size) * 1.1);
- box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
-                  + Add New Subject
-                </button>
-              </div>
 
-              ${subjects.length === 0 ? `
-                <div class="text-center py-12" style="color: ${subtitleColor};">
-                  <p style="font-size: calc(var(--font-size) * 1.2);
-">No subjects yet. Create your first subject to get started!</p>
-                </div>
-              ` : `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  ${subjectsHTML}
-                </div>
-              `}
-            </div>
+          <div class="category-meta">
+            <h2 class="category-title">
+              ${subject.subject_name}
+            </h2>
+            <p class="category-subtitle">
+              ${sets.length} set${sets.length !== 1 ? "s" : ""}
+            </p>
           </div>
         </div>
-      `;
-    }
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="subjects-view">
+      <div class="subjects-wrapper">
+        <div class="subjects-container fade-in">
+
+          <div class="subjects-hero">
+            <h1 class="subjects-title">
+              ${config.app_title || defaultConfig.app_title}
+            </h1>
+            <p class="subjects-subtitle">
+              ${config.app_subtitle || defaultConfig.app_subtitle}
+            </p>
+          </div>
+
+          <div class="subjects-actions">
+            <button
+              id="addSubjectBtn"
+              class="add-subject-btn"
+            >
+              + Add New Subject
+            </button>
+          </div>
+
+          ${
+            subjects.length === 0
+              ? `
+                <div class="subjects-empty">
+                  <p>No subjects yet. Create your first subject to get started!</p>
+                </div>
+              `
+              : `
+                <div class="subjects-grid">
+                  ${subjectsHTML}
+                </div>
+              `
+          }
+
+        </div>
+      </div>
+    </div>
+  `;
+}
 
     function renderSetsView() {
       if (!currentSubject || !currentSubject.subject_id) {
@@ -521,12 +538,12 @@ function renderCardsView() {
       </button>
 
       <div class="card-section">
-        <p class="card-label">Q</p>
+        <p class="card-label">Question</p>
         <p class="card-text card-question">${card.question}</p>
       </div>
 
       <div class="card-section">
-        <p class="card-label">A</p>
+        <p class="card-label">Answer</p>
         <p class="card-text card-answer">${card.answer}</p>
       </div>
     </div>
@@ -555,25 +572,30 @@ function renderCardsView() {
           <div class="cards-actions">
             <button id="addCardBtn" class="action-btn">
               <img src="icons/add.svg" class="icon md" />
+              <span class="action-label">Add</span>
             </button>
 
             <button id="aiGenerateBtn" class="action-btn">
               <img src="icons/ai.svg" class="icon md" />
+              <span class="action-label">AI</span>
             </button>
 
             <button id="importCardsJsonBtn" class="action-btn">
               <img src="icons/import.svg" class="icon md" />
+              <span class="action-label">Import</span>
             </button>
 
             ${cards.length > 0 ? `
               <button id="studyCardsBtn" class="action-btn">
                 <img src="icons/flashcard.svg" class="icon md" />
+                <span class="action-label">Study</span>
               </button>
             ` : ""}
 
             ${cards.length > 1 ? `
               <button id="quizCardsBtn" class="action-btn">
                 <img src="icons/quiz.svg" class="icon md" />
+                <span class="action-label">Quiz</span>
               </button>
             ` : ""}
           </div>
@@ -594,6 +616,7 @@ function renderCardsView() {
     </div>
   `;
 }
+
 
 
     function renderStudyView() {

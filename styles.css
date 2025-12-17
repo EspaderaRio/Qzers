@@ -838,7 +838,144 @@ body {
 }
 
 /* ===== LAYOUT ===== */
-.view-container {
+.subjects-view {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--background);
+}
+
+.subjects-wrapper {
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.subjects-container {
+  width: 100%;
+  max-width: 64rem;
+}
+
+/* ===== HERO ===== */
+.subjects-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.subjects-title {
+  font-size: calc(var(--font-size) * 2.5);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: .5rem;
+}
+
+.subjects-subtitle {
+  font-size: calc(var(--font-size) * 1.1);
+  color: color-mix(in srgb, var(--text), transparent 40%);
+}
+
+/* ===== ACTION ===== */
+.subjects-actions {
+  margin-bottom: 1.5rem;
+}
+
+.add-subject-btn {
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: calc(var(--font-size) * 1.1);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary), transparent 60%);
+}
+
+/* ===== GRID ===== */
+.subjects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .subjects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== CARD ===== */
+.category-card {
+  position: relative;
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(0,0,0,.12);
+}
+
+/* ===== DELETE ===== */
+.delete-subject-btn {
+  position: absolute;
+  top: .75rem;
+  right: .75rem;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--text), transparent 40%);
+}
+
+/* ===== CARD CONTENT ===== */
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.category-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(
+    135deg,
+    var(--primary),
+    color-mix(in srgb, var(--primary), black 20%)
+  );
+}
+
+.category-icon-text {
+  font-size: calc(var(--font-size) * 1.4);
+}
+
+.category-title {
+  font-size: calc(var(--font-size) * 1.4);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.category-subtitle {
+  font-size: calc(var(--font-size) * .85);
+  color: color-mix(in srgb, var(--text), transparent 45%);
+}
+
+/* ===== EMPTY ===== */
+.subjects-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: color-mix(in srgb, var(--text), transparent 45%);
+}
+
+
+/* ===== LAYOUT ===== */
+.view-container-cards {
   width: 100%;
   height: 100%;
   overflow-x: auto;
@@ -846,12 +983,12 @@ body {
   flex-direction: column;
 }
 
-.view-content {
+.view-content-cards {
   min-height: 100%;
   padding: 1.5rem;
 }
 
-.view-inner {
+.view-inner-cards {
   max-width: 64rem;
   margin: 0 auto;
 }
@@ -873,6 +1010,9 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
+.cards-title{
+  place-items: center;
+}
 .cards-title h2 {
   font-size: calc(var(--font-size) * 1.8);
   font-weight: 400;
@@ -881,6 +1021,7 @@ body {
 .cards-title p {
   font-size: calc(var(--font-size) * 0.85);
   opacity: 0.7;
+  justify-content: center;
 }
 
 .header-spacer {
@@ -893,7 +1034,7 @@ body {
   gap: 5px;
 
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
 
   padding: 0.25rem 0.25rem 0.75rem;
   margin-bottom: 1.5rem;
@@ -903,6 +1044,7 @@ body {
 
   scrollbar-width: none; 
   scroll-snap-type: x mandatory;
+  justify-content: center;
 }
 
 .cards-actions::after {
@@ -946,11 +1088,17 @@ body {
 /* ===== CARDS ===== */
 .cards-list {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(300px, max-content));
+  justify-content: center;
   gap: 1rem;
 }
 
+
+
 .card-item {
+  width: min(300px, 100%);
+  justify-content: center;
+  align-items: center;
   position: relative;
   padding: 1rem;
   background: var(--card-bg);
@@ -972,6 +1120,8 @@ body {
 /* ===== CARD CONTENT ===== */
 .card-section {
   margin-bottom: 0.75rem;
+  justify-content: center;
+  align-items: center;
 }
 
 .card-label {
@@ -979,10 +1129,12 @@ body {
   text-transform: uppercase;
   color: var(--primary);
   margin-bottom: 0.25rem;
+  text-align: center;
 }
 
 .card-text {
   font-size: var(--font-size);
+  text-align: center;
 }
 
 .card-answer {
