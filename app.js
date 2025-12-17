@@ -501,103 +501,100 @@ async function onConfigChange(newConfig) {
         </div>
       `;
     }
+function renderCardsView() {
+  if (!currentSet || !currentSet.set_id) {
+    currentView = "sets";
+    renderApp();
+    return "";
+  }
 
-    function renderCardsView() {
-       if (!currentSet || !currentSet.set_id) {
-            currentView = 'sets';
-            renderApp();
-            return '';
-      }
-      const cards = getCardsForSet(currentSet.set_id);
-      const fontSize = config.font_size || 12;
-      const titleColor = config.text_color || defaultConfig.text_color;
-      const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
-      const primaryColor = config.primary_color || defaultConfig.primary_color;
-      const cardBg = config.card_background || defaultConfig.card_background;
+  const cards = getCardsForSet(currentSet.set_id);
 
-      const cardsHTML = cards.map(card => `
-        <div class="p-4 rounded-xl" style="background: ${cardBg}; box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative;">
-          <button class="delete-card-btn" data-id="${card.id}" style="position: absolute; top: 0.5rem; right: 0.5rem; color: ${subtitleColor}; font-size: calc(var(--font-size) * 1.2);
- background: none; border: none; cursor: pointer; padding: 0.25rem; line-height: 1;">×</button>
-          <div style="margin-bottom: 0.75rem;">
-            <p style="font-size: calc(var(--font-size) * 0.75); color: var(--primary); font-weight: 400; text-transform: uppercase; margin-bottom: 0.25rem;">Q</p>
-            <p style="font-size: var(--font-size); color: ${titleColor};">${card.question}</p>
-          </div>
-          <div>
-            <p style="font-size: calc(var(--font-size) * 0.75); color: var(--primary); font-weight: 400; text-transform: uppercase; margin-bottom: 0.25rem;">A</p>
-            <p style="font-size: var(--font-size); color: ${subtitleColor};">${card.answer}</p>
-          </div>
-        </div>
-      `).join('');
+  const cardsHTML = cards.map(card => `
+    <div class="card-item">
+      <button
+        class="card-delete-btn"
+        data-id="${card.id}"
+        aria-label="Delete card"
+      >
+        ×
+      </button>
 
-      return `
-        <div class="w-full h-full overflow-auto">
-          <div class="min-h-full flex flex-col p-6">
-            <div class="max-w-4xl w-full mx-auto">
-              <div class="flex items-center justify-between mb-8 slide-in">
-                <button id="backToSetsBtn" class="px-4 py-2 rounded-lg transition-all" style="background: ${cardBg}; color: ${titleColor}; font-size: var(--font-size);
- box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                  ← Back
-                </button>
-                <div class="text-center">
-                  <h2 style="font-size: calc(var(--font-size) * 1.8); font-weight: 400; color: ${titleColor};">${currentSet.set_name}</h2>
-                  <p style="font-size: calc(var(--font-size) * 0.875); color: ${subtitleColor};">${cards.length} card${cards.length !== 1 ? 's' : ''}</p>
-                </div>
-                <div style="width: 50px;"></div>
-              </div>
+      <div class="card-section">
+        <p class="card-label">Q</p>
+        <p class="card-text card-question">${card.question}</p>
+      </div>
 
-<div class="mb-6 flex gap-3 relative z-10 cards-actions">
-  <button id="addCardBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-  style="display: flex; background: white; border-radius: var(--radius); align-items: center; justify-content: center;">
-    <img src="icons/add.svg" class="icon md" />
-  </button>
+      <div class="card-section">
+        <p class="card-label">A</p>
+        <p class="card-text card-answer">${card.answer}</p>
+      </div>
+    </div>
+  `).join("");
 
-  <button id="aiGenerateBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-  style="display: flex; background: white; background: white; border-radius: var(--radius); align-items: center; justify-content: center;">
-    <img src="icons/ai.svg" class="icon md" />
-  </button>
+  return `
+    <div class="view-container">
+      <div class="view-content">
+        <div class="view-inner">
 
-  <button id="importCardsJsonBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-  style="display: flex; background: white; border-radius: var(--radius);align-items: center; justify-content: center;">
-    <img src="icons/import.svg" class="icon md" />
-  </button>
+          <!-- HEADER -->
+          <div class="cards-header slide-in">
+            <button id="backToSetsBtn" class="btn-back">
+              ← Back
+            </button>
 
-  ${cards.length > 0 ? `
-    <button id="studyCardsBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-    style="display: flex; background: white; border-radius: var(--radius); align-items: center; justify-content: center;">
-      <img src="icons/flashcard.svg" class="icon md" />
-    </button>
-  ` : ''}
-  
-  ${cards.length > 1 ? `
-  <button id="quizCardsBtn" class="flex-1 py-4 rounded-xl transition-all font-semibold"
-    style="display:flex; background: white; border-radius: var(--radius); align-items:center;justify-content:center;">
-    📝
-  </button>
-` : ''}
-
-</div>
-
-
-
-${cards.length === 0 ? `
-  <div class="text-center py-12" style="color: ${subtitleColor};">
-    <p style="font-size: calc(var(--font-size) * 1.2);
-">
-      No cards yet. Add your first flashcard!
-    </p>
-  </div>
-` : `
-  <div class="grid grid-cols-1 gap-4">
-    ${cardsHTML}
-  </div>
-`}
-
+            <div class="cards-title">
+              <h2>${currentSet.set_name}</h2>
+              <p>${cards.length} card${cards.length !== 1 ? "s" : ""}</p>
             </div>
+
+            <div class="header-spacer"></div>
           </div>
+
+          <!-- ACTIONS -->
+          <div class="cards-actions">
+            <button id="addCardBtn" class="action-btn">
+              <img src="icons/add.svg" class="icon md" />
+            </button>
+
+            <button id="aiGenerateBtn" class="action-btn">
+              <img src="icons/ai.svg" class="icon md" />
+            </button>
+
+            <button id="importCardsJsonBtn" class="action-btn">
+              <img src="icons/import.svg" class="icon md" />
+            </button>
+
+            ${cards.length > 0 ? `
+              <button id="studyCardsBtn" class="action-btn">
+                <img src="icons/flashcard.svg" class="icon md" />
+              </button>
+            ` : ""}
+
+            ${cards.length > 1 ? `
+              <button id="quizCardsBtn" class="action-btn">
+                <img src="icons/quiz.svg" class="icon md" />
+              </button>
+            ` : ""}
+          </div>
+
+          <!-- EMPTY STATE / LIST -->
+          ${cards.length === 0 ? `
+            <div class="cards-empty">
+              <p>No cards yet. Add your first flashcard!</p>
+            </div>
+          ` : `
+            <div class="cards-list">
+              ${cardsHTML}
+            </div>
+          `}
+
         </div>
-      `;
-    }
+      </div>
+    </div>
+  `;
+}
+
 
     function renderStudyView() {
       const cards = getCardsForSet(currentSet.set_id);
