@@ -328,23 +328,35 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
   inset: 0;
   background: rgba(0,0,0,.45);
   backdrop-filter: blur(6px);
+
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: flex-start;   /* 👈 important */
+
+  padding: 1.25rem;          /* 👈 breathing room at top */
+  overflow-y: auto;
+
   z-index: 1300;
   animation: fadeIn .2s ease;
 }
 
+
 .settings-modal {
   width: 100%;
   max-width: 420px;
+
+  max-height: calc(100vh - 2.5rem); /* 👈 key */
+  overflow-y: auto;
+
   background: var(--card-bg);
   border-radius: 22px;
   padding: 1.75rem;
+
   box-shadow: 0 30px 80px rgba(0,0,0,.35);
   animation: slideUp .25s ease;
   font-family: var(--font-family);
 }
+
 .settings-header {
   display: flex;
   align-items: center;
@@ -980,17 +992,25 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
 
 .action-btn {
   flex: 0 0 auto;              /* IMPORTANT */
-  min-width: 80px;
-  min-height: 80px;
+  min-width: 100px;
+  min-height: 100px;
   background: #ffffff;
   border-radius: var(--radius);
 
   display: flex;
-  align-items: center;
   box-shadow: 0 6px 14px rgba(0,0,0,0.08);
   touch-action: manipulation;
   scroll-snap-align: center;
+  flex-direction: column;   
+  align-items: center;      
+  justify-content: center;  
 }
+.action-btn .icon {
+  display: block;
+  width: 80px;   
+  height: 60px;
+}
+
 .action-label{
   color: #28577f;
 }
