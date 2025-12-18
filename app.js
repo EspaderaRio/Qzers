@@ -174,7 +174,7 @@ const THEME_PRESETS = {
 
 let config = { ...defaultConfig };
 let allData = [];
-let currentView = 'subjects'; // subjects, sets, cards, study
+let currentView = 'subjects';
 let currentSubject = null;
 let currentSet = null;
 let currentCardIndex = 0;
@@ -184,6 +184,20 @@ let quizIndex = 0;
 let quizScore = 0;
 let quizQuestions = [];
 let deferredInstallPrompt = null;
+let studyTimer = {
+  duration: 20 * 60,
+  remaining: 20 * 60,
+  interval: null,
+  running: false,
+  startTime: null
+};
+
+const savedDuration = parseInt(localStorage.getItem("studyTimerDuration"), 10);
+if (!isNaN(savedDuration) && savedDuration > 0) {
+  studyTimer.duration = savedDuration;
+  studyTimer.remaining = savedDuration;
+}
+
 
 function applyUserSettings() {
   const s = userSettings;
@@ -435,20 +449,24 @@ function renderApp() {
     content = renderCardsView();
   } else if (currentView === 'study') {
     content = renderStudyView();
-  }
-  else if (currentView === 'quiz') {
+  } else if (currentView === 'quiz') {
     content = renderQuizView();
-  }
-  else if (currentView === 'quiz-result') {
+  } else if (currentView === 'quiz-result') {
     content = renderQuizResultView();
-  }
-  else if (currentView === 'customize') {
+  } else if (currentView === 'customize') {
     content = renderCustomizationPanel();
   }
 
-
+  
   app.innerHTML = content;
+
+  
   attachEventListeners();
+
+ 
+  if (currentView === "quiz") {
+    updateTimerUI();
+  }
 }
 
 function renderSubjectsView() {
@@ -703,6 +721,105 @@ function renderCardsView() {
   `;
 }
 
+function startStudyTimer() {
+  if (studyTimer.running) return;
+
+  stopStudyTimer(); // ✅ safety clear
+
+  studyTimer.running = true;
+  studyTimer.startTime = Date.now();
+
+  studyTimer.interval = setInterval(() => {
+    studyTimer.remaining--;
+
+    if (studyTimer.remaining <= 0) {
+      studyTimer.remaining = 0;
+      stopStudyTimer();
+      currentView = "quiz-result";
+      renderApp();
+      return;
+    }
+
+    updateTimerUI();
+  }, 1000);
+}
+
+
+
+function stopStudyTimer() {
+  clearInterval(studyTimer.interval);
+  studyTimer.interval = null;
+  studyTimer.running = false;
+}
+
+function resetStudyTimer() {
+  stopStudyTimer();
+  studyTimer.remaining = studyTimer.duration;
+  
+  updateTimerUI();
+}
+
+
+function updateTimerUI() {
+  const el = document.getElementById("study-timer");
+  if (!el) return;
+
+  el.textContent = formatTime(studyTimer.remaining);
+
+  const clock = document.getElementById("floating-timer");
+
+if (studyTimer.remaining <= 60) {
+  clock.style.background = config.primary_color;
+  clock.style.color = "#fff";
+} else {
+  clock.style.background = config.card_background;
+  clock.style.color = config.primary_color;
+}
+
+}
+
+
+
+function applyTimerSettings() {
+  if (studyTimer.running) {
+    stopStudyTimer();
+  }
+
+  const h = parseInt(document.getElementById("timer-hours")?.value) || 0;
+  const m = parseInt(document.getElementById("timer-minutes")?.value) || 0;
+
+  const total = h * 3600 + m * 60;
+  if (total <= 0) return;
+
+  studyTimer.duration = total;
+  studyTimer.remaining = total;
+  localStorage.setItem("studyTimerDuration", total);
+
+  updateTimerUI();
+}
+
+
+
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function toggleFloatingTimer() {
+  const el = document.getElementById("floating-timer");
+  if (!el) return;
+
+  el.style.display =
+    currentView === "quiz" || currentView === "study"
+      ? "flex"
+      : "none";
+}
 
 
 function renderStudyView() {
@@ -782,7 +899,6 @@ function renderStudyView() {
                     Next →
                   </button>
                 </div>
-              </div>
             </div>
           </div>
         </div>
@@ -819,42 +935,142 @@ function renderQuizView() {
 
   return `
     <div class="w-full h-full overflow-auto">
-      <div class="min-h-full flex flex-col p-6">
+      <div class="min-h-full flex flex-col p-5">
         <div class="max-w-3xl w-full mx-auto fade-in">
 
           <!-- Header -->
           <div class="flex items-center justify-between mb-4">
+
             <button id="exitQuizBtn"
-              class="px-4 py-2 rounded-lg"
-              style="background:${bg};color:${text};box-shadow:0 2px 8px rgba(0,0,0,.08);">
+              class="px-4 py-2 rounded-lg text-sm"
+              style="background:${bg};color:${text};
+              box-shadow:0 2px 8px rgba(0,0,0,.08);">
               ← Exit
             </button>
 
-            <div style="text-align:right;">
-              <p style="font-size:var(--font-size);
-color:${sub};">
-                Question ${quizIndex + 1} / ${quizQuestions.length}
+            <!-- Timer Pill -->
+<div
+  id="floating-timer"
+  style="
+    position:fixed;
+    top:16px;
+    right:16px;
+    z-index:1000;
+
+    width:80px;
+    height:80px;
+    border-radius:50%;
+
+    background:${bg};
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+
+    font-weight:700;
+    color:${primary};
+  "
+>
+  <div style="font-size:1.2rem;">⏱</div>
+  <div
+    id="study-timer"
+    style="
+      font-size:1.2rem;
+      margin-top:4px;
+      letter-spacing:1px;
+    "
+  >
+    ${formatTime(studyTimer.remaining)}
+  </div>
+</div>
+
+
+
+            <div class="text-right text-sm">
+              <p style="color:${sub};">
+                Q ${quizIndex + 1} / ${quizQuestions.length}
               </p>
-              <p style="font-size:var(--font-size);
- color:${primary}; font-weight:600;">
-              ⭐ Score: ${quizScore}
+              <p style="color:${primary};font-weight:600;">
+                ⭐ ${quizScore}
               </p>
             </div>
           </div>
 
+          <!-- Timer Controls Card -->
+<div
+  class="flex flex-wrap gap-2 items-center justify-center mb-5 p-4 rounded-xl mx-auto"
+  style="
+    background:${bg};
+    box-shadow:0 4px 14px rgba(0,0,0,.08);
+    max-width:420px;
+  "
+>
+  <input
+    type="number"
+    id="timer-hours"
+    min="0"
+    placeholder="H"
+    class="w-16 px-2 py-2 rounded-lg text-center"
+  />
+
+  <input
+    type="number"
+    id="timer-minutes"
+    min="0"
+    max="59"
+    placeholder="M"
+    class="w-16 px-2 py-2 rounded-lg text-center"
+  />
+
+  <button
+    class="px-3 py-2 rounded-lg text-sm font-medium"
+    style="background:${primary};color:white;"
+    onclick="applyTimerSettings()"
+  >
+    Set
+  </button>
+
+  <button
+    class="px-3 py-2 rounded-lg text-sm"
+    style="background:rgba(0,0,0,.08);color:${text};"
+    onclick="startStudyTimer()"
+  >
+    ▶ Start
+  </button>
+
+  <button
+    class="px-3 py-2 rounded-lg text-sm"
+    style="background:rgba(0,0,0,.08);color:${text};"
+    onclick="stopStudyTimer()"
+  >
+    ⏸ Pause
+  </button>
+</div>
+
+
           <!-- Progress -->
           <div class="w-full h-2 rounded-full mb-6"
-               style="background:rgba(0,0,0,.1);">
+            style="background:rgba(0,0,0,.12);">
             <div class="h-full rounded-full"
-                 style="width:${progress}%;background:${primary};transition:width .3s;">
+              style="width:${progress}%;
+              background:${primary};
+              transition:width .3s;">
             </div>
           </div>
 
           <!-- Question -->
           <div class="p-6 rounded-2xl mb-8"
-               style="background:${bg};box-shadow:0 8px 24px rgba(0,0,0,.12);">
-            <h2 style="font-size:calc(var(--font-size) * 1.5);
-color:${text};line-height:1.6;">
+            style="background:${bg};
+            box-shadow:0 10px 28px rgba(0,0,0,.12);">
+            <h2
+              style="
+                font-size:calc(var(--font-size) * 1.5);
+                color:${text};
+                line-height:1.6;
+              "
+            >
               ${q.question}
             </h2>
           </div>
@@ -862,22 +1078,22 @@ color:${text};line-height:1.6;">
           <!-- Options -->
           <div class="grid gap-4">
             ${q.options.map(opt => `
-              <button class="quiz-option"
+              <button
+                class="quiz-option"
                 data-answer="${opt}"
                 style="
                   padding:16px;
-                  border-radius: var(--radius);
+                  border-radius:var(--radius);
                   background:${bg};
                   color:${text};
                   font-size:var(--font-size);
-
-                  text-align:left;
                   box-shadow:0 4px 12px rgba(0,0,0,.08);
-                  transition:all .2s;
-                ">
+                  transition:transform .15s, box-shadow .15s;
+                "
+              >
                 ${opt}
               </button>
-            `).join('')}
+            `).join("")}
           </div>
 
         </div>
@@ -885,6 +1101,8 @@ color:${text};line-height:1.6;">
     </div>
   `;
 }
+
+
 
 function renderQuizResultView() {
   const primary = config.primary_color;
@@ -926,6 +1144,14 @@ color:${text};margin-bottom:24px;">
     </div>
   `;
 }
+
+function exitQuiz() {
+  stopStudyTimer();
+  resetStudyTimer();
+  currentView = "cards";
+  renderApp();
+}
+
 
 function showAddSubjectModal() {
   const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
@@ -1573,11 +1799,15 @@ function attachEventListeners() {
   if (quizBtn) {
     quizBtn.addEventListener('click', () => {
       const cards = getCardsForSet(currentSet.set_id);
-      quizQuestions = generateQuizQuestions(cards);
-      quizIndex = 0;
-      quizScore = 0;
-      currentView = 'quiz';
-      renderApp();
+quizQuestions = generateQuizQuestions(cards);
+quizIndex = 0;
+quizScore = 0;
+
+resetStudyTimer();
+
+currentView = 'quiz';
+renderApp();
+
     });
   }
 
@@ -1686,14 +1916,15 @@ function attachEventListeners() {
       });
     });
   }
-  const exitQuizBtn = document.getElementById('exitQuizBtn');
-  if (exitQuizBtn) {
-    exitQuizBtn.addEventListener('click', () => {
-      currentView = 'cards';
-      renderApp();
-    });
-  }
-
+const exitQuizBtn = document.getElementById('exitQuizBtn');
+if (exitQuizBtn) {
+  exitQuizBtn.addEventListener('click', () => {
+    stopStudyTimer();
+    resetStudyTimer();
+    currentView = 'cards';
+    renderApp();
+  });
+}
 }
 
 function adjustColor(color, amount) {
