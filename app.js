@@ -1,3 +1,13 @@
+window.currentStudent =
+  JSON.parse(localStorage.getItem("currentStudent") || "null");
+
+
+(function cleanupNullQuizScores() {
+  let scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+  scores = scores.filter(s => s.quizId != null);
+  localStorage.setItem("studentQuizScores", JSON.stringify(scores));
+})();
+
 const TEACHER_DRAFT_KEY = "teacher_quiz_draft";
 
 function shuffleArray(array) {
@@ -47,153 +57,6 @@ function initTeacherView() {
     };
   });
 }
-
-
-function renderStudentView() {
-  const student = window.currentStudent || { name: "", id: "" };
-
-  return `
-    <div class="w-full min-h-screen flex items-center justify-center p-4"
-         style="background-color: var(--background); font-family: var(--font-family); font-size: var(--font-size); line-height: var(--line-height);">
-      <div class="w-full max-w-md p-6 fade-in space-y-6"
-           style="background-color: var(--card-bg); border-radius: var(--radius);">
-
-        <!-- Logged in info -->
-        ${student.name && student.id ? `
-        <div style="color: var(--primary); font-size: 0.875rem;">
-          ✅ Logged in as: ${student.name} (${student.id})
-        </div>` : ""}
-
-        <!-- Student Info Modal -->
-        <div id="student-info-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-          <div style="background-color: var(--card-bg); border-radius: var(--radius);" class="p-6 w-full max-w-sm mx-2">
-            <h3 style="color: var(--text);" class="text-lg font-semibold mb-4">👤 Student Information</h3>
-            <input
-              id="student-name-input"
-              placeholder="Full Name"
-              style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
-              class="w-full mb-3 px-3 py-2"
-            />
-            <input
-              id="student-id-input"
-              placeholder="Student ID"
-              style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
-              class="w-full mb-4 px-3 py-2"
-            />
-            <div class="flex justify-end gap-2">
-              <button onclick="closeStudentInfoModal()"
-                      style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
-                      class="px-4 py-2">
-                Cancel
-              </button>
-              <button onclick="confirmStudentInfo()"
-                      style="background-color: var(--primary); color: white; border-radius: var(--radius);"
-                      class="px-4 py-2">
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quiz Join Section -->
-        <h2 style="color: var(--text);" class="text-2xl font-semibold">🧠 Join Quiz</h2>
-        <p style="color: var(--secondary-text);" class="text-sm mb-4">
-          Enter the quiz ID provided by your teacher
-        </p>
-
-        <input
-          id="student-quiz-id"
-          placeholder="Quiz ID"
-          style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
-          class="w-full mb-4 px-4 py-3"
-        />
-
-        <button
-          onclick="loadStudentQuiz()"
-          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
-          class="w-full py-3 mb-2 font-semibold"
-        >
-          Start Quiz
-        </button>
-
-        <button 
-          onclick="currentView='student-score-history'; renderApp();"
-          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
-          class="w-full py-3 mb-2 font-semibold"
-        >
-          📊 View Score History
-        </button>
-
-        <button
-          onclick="backStudentBtn()"
-          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
-          class="w-full py-3 mb-2 font-semibold"
-        >
-          Back
-        </button>
-
-        <div id="student-error" style="color: red;" class="mt-4 text-center"></div>
-      </div>
-    </div>
-  `;
-}
-
-function openStudentInfoModal() {
-  document.getElementById("student-info-modal").classList.remove("hidden");
-}
-
-function closeStudentInfoModal() {
-  document.getElementById("student-info-modal").classList.add("hidden");
-}
-
-function confirmStudentInfo() {
-  const nameInput = document.getElementById("student-name-input");
-  const idInput = document.getElementById("student-id-input");
-
-  if (!nameInput || !idInput) return;
-
-  const name = nameInput.value.trim();
-  const id = idInput.value.trim();
-
-  if (!name || !id) {
-    alert("Please enter your name and student ID");
-    return;
-  }
-
-  currentStudent.name = name;
-  currentStudent.id = id;
-  isStudentLocked = true;
-
-  sessionStorage.setItem(
-    "currentStudent",
-    JSON.stringify({ name, id })
-  );
-
-  closeStudentInfoModal();
-}
-
-
-
-
-function saveStudentInfo() {
-  const name = document.getElementById("student-name").value.trim();
-  const id = document.getElementById("student-id").value.trim();
-
-  if (!name || !id) return alert("Please fill in all fields.");
-
-  
-  sessionStorage.setItem("currentStudent", JSON.stringify({ name, id }));
-
- 
-  document.getElementById("student-info-form").style.display = "none";
-  startStudentQuiz(); 
-}
-
-function backStudentBtn() {
-  currentView = 'home'; 
-  renderApp();         
-}
-
 
 const AI_API_URL =
   "https://flashcards-ai-backend.onrender.com/api/generate-cards";
@@ -390,6 +253,11 @@ let teacherQuizScore = 0;
 let isTeacherQuiz = false;
 let currentQuizId = null;
 let isStudentLocked = false;
+let studentTab = "main";   
+let teacherTab = "main";
+let pendingQuizId = null;
+let timerHidden = false;
+let showTimerControls = true;
 let currentStudent = {
   name: "",
   id: ""
@@ -486,7 +354,377 @@ function openStudentQuiz() {
   renderApp();
 }
 
+function renderStudentView() {
+  return `
+    <div class="flex flex-col items-center mt-6 space-y-6 w-full">
+
+      <!-- Student Tabs -->
+      <div class="flex gap-2">
+        <button
+          class="px-4 py-2 rounded-lg transition-colors duration-200"
+          style="
+            background-color: ${studentTab === 'main' ? 'var(--primary)' : 'var(--surface)'}; 
+            color: ${studentTab === 'main' ? 'var(--on-primary)' : 'var(--on-surface)'};"
+          onclick="studentTab='main'; renderApp()"
+        >
+          Quiz
+        </button>
+
+        <button
+          class="px-4 py-2 rounded-lg transition-colors duration-200"
+          style="
+            background-color: ${studentTab === 'profile' ? 'var(--primary)' : 'var(--surface)'}; 
+            color: ${studentTab === 'profile' ? 'var(--on-primary)' : 'var(--on-surface)'};"
+          onclick="studentTab='profile'; renderApp()"
+        >
+          Profile
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="w-full max-w-xl">
+        ${studentTab === 'main'
+          ? renderJoinQuiz()
+          : renderStudentProfile()}
+      </div>
+
+    </div>
+  `;
+}
+
+function renderStudentProfile() {
+  const s = window.currentStudent || {};
+
+  return `
+    <div class="p-6 rounded-xl shadow space-y-4 mx-auto"
+         style="background-color: var(--surface); color: var(--on-surface);">
+      <h2 class="text-2xl font-bold text-center">Student Profile</h2>
+
+      <div>
+        <label class="block text-sm font-semibold">Name</label>
+        <input id="student-name"
+               class="w-full p-2 border rounded"
+               style="border-color: var(--border); background: var(--input-bg); color: var(--on-surface);"
+               value="${s.name || ''}">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold">Student ID</label>
+        <input id="student-id"
+               class="w-full p-2 border rounded"
+               style="border-color: var(--border); background: var(--input-bg); color: var(--on-surface);"
+               value="${s.id || ''}">
+      </div>
+
+      <div class="flex justify-center gap-4 pt-2">
+        <button class="px-4 py-2 rounded transition-colors duration-200"
+                style="background-color: var(--primary); color: var(--on-primary);"
+                onclick="
+                  saveStudentProfile(
+                    document.getElementById('student-name').value.trim(),
+                    document.getElementById('student-id').value.trim()
+                  )
+                ">
+          Save
+        </button>
+
+        <button class="px-4 py-2 rounded transition-colors duration-200"
+                style="background-color: var(--error); color: var(--on-error);"
+                onclick="clearStudentInfo()">
+          Reset
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+function renderJoinQuiz() {
+  const student = window.currentStudent || { name: "", id: "" };
+
+  return `
+    <div class="w-full min-h-screen flex items-center justify-center p-4"
+         style="background-color: var(--background); font-family: var(--font-family); font-size: var(--font-size); line-height: var(--line-height);">
+      <div class="w-full max-w-md p-6 fade-in space-y-6"
+           style="background-color: var(--card-bg); border-radius: var(--radius);">
+
+        <!-- Logged in info -->
+        ${student.name && student.id ? `
+        <div style="color: var(--primary); font-size: 0.875rem;">
+          ✅ Logged in as: ${student.name} (${student.id})
+        </div>` : ""}
+
+        <!-- Student Info Modal -->
+        <div id="student-info-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+          <div style="background-color: var(--card-bg); border-radius: var(--radius);" class="p-6 w-full max-w-sm mx-2">
+            <h3 style="color: var(--text);" class="text-lg font-semibold mb-4">👤 Student Information</h3>
+            <input
+              id="student-name-input"
+              placeholder="Full Name"
+              style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+              class="w-full mb-3 px-3 py-2"
+            />
+            <input
+              id="student-id-input"
+              placeholder="Student ID"
+              style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+              class="w-full mb-4 px-3 py-2"
+            />
+            <div class="flex justify-end gap-2">
+              <button onclick="closeStudentInfoModal()"
+                      style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+                      class="px-4 py-2">
+                Cancel
+              </button>
+              <button onclick="confirmStudentInfo()"
+                      style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+                      class="px-4 py-2">
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz Join Section -->
+        <h2 style="color: var(--text);" class="text-2xl font-semibold">🧠 Join Quiz</h2>
+        <p style="color: var(--secondary-text);" class="text-sm mb-4">
+          Enter the quiz ID provided by your teacher
+        </p>
+
+        <input
+          id="student-quiz-id"
+          placeholder="Quiz ID"
+          style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+          class="w-full mb-4 px-4 py-3"
+        />
+
+        <button
+          onclick="loadStudentQuiz()"
+          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+          class="w-full py-3 mb-2 font-semibold"
+        >
+          Start Quiz
+        </button>
+
+        <button 
+          onclick="currentView='student-score-history'; renderApp();"
+          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+          class="w-full py-3 mb-2 font-semibold"
+        >
+          📊 View Score History
+        </button>
+
+        <button
+          onclick="backStudentBtn()"
+          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+          class="w-full py-3 mb-2 font-semibold"
+        >
+          Back
+        </button>
+
+        <div id="student-error" style="color: red;" class="mt-4 text-center"></div>
+      </div>
+    </div>
+  `;
+}
+
+function saveStudentProfile(name, id) {
+  window.currentStudent = { name, id };
+  localStorage.setItem("currentStudent", JSON.stringify(window.currentStudent));
+  studentTab = "profile";
+  renderApp();
+}
+
+function hasValidStudent() {
+  return (
+    window.currentStudent &&
+    window.currentStudent.name &&
+    window.currentStudent.id
+  );
+}
+
+
+function clearStudentInfo() {
+  if (!confirm("Clear student information?")) return;
+  window.currentStudent = null;
+  localStorage.removeItem("currentStudent");
+  studentTab = "main";
+  renderApp();
+}
+
+function openStudentInfoModal() {
+  if (!window.currentStudent) return;
+
+  document.getElementById("student-name-input").value = window.currentStudent.name || "";
+  document.getElementById("student-id-input").value = window.currentStudent.id || "";
+
+  document.getElementById("student-info-modal").classList.remove("hidden");
+}
+
+function closeStudentInfoModal() {
+  document.getElementById("student-info-modal").classList.add("hidden");
+}
+
+function submitStudentInfo() {
+  const name = document.getElementById("student-name").value.trim();
+  const id = document.getElementById("student-id").value.trim();
+
+  if (!name || !id) {
+    alert("Please enter both name and ID");
+    return;
+  }
+
+  window.currentStudent = { name, id };
+  sessionStorage.setItem("currentStudent", JSON.stringify(window.currentStudent));
+
+  closeStudentInfoModal();
+
+  // If a quiz was pending, resume it
+  if (pendingQuizId) {
+    loadStudentQuiz(pendingQuizId);
+    pendingQuizId = null;
+  }
+}
+
+
+
+
+function confirmStudentInfo() {
+  const name = document.getElementById("student-name-input").value.trim();
+  const id = document.getElementById("student-id-input").value.trim();
+
+  if (!name || !id) {
+    alert("Please enter your name and student ID");
+    return;
+  }
+
+  window.currentStudent = { name, id };
+  localStorage.setItem("currentStudent", JSON.stringify(window.currentStudent));
+
+  closeStudentInfoModal();
+
+  if (pendingQuizId) {
+    const quizId = pendingQuizId;
+    pendingQuizId = null;
+    loadStudentQuiz(); 
+  }
+}
+
+function startStudentQuiz(quizId) {
+  if (!quizId) {
+    alert("Cannot start quiz: quizId missing!");
+    return;
+  }
+
+  currentQuizId = quizId;
+  quizIndex = 0;
+  quizScore = 0;
+  currentView = "teacher-quiz";
+  renderApp();
+}
+
+
+function backStudentBtn() {
+  currentView = 'home'; 
+  renderApp();         
+}
+
 function renderTeacherView() {
+  return `
+    <div  class="flex flex-col items-center mt-6 space-y-6 w-full">
+
+      <!-- Teacher Tabs -->
+      <div class="flex gap-2">
+        <button
+          class="px-4 py-2 rounded-lg transition-colors duration-200"
+          style="
+            background-color: ${teacherTab === 'main' ? 'var(--primary)' : 'var(--surface)'}; 
+            color: ${teacherTab === 'main' ? 'var(--on-primary)' : 'var(--on-surface)'};"
+          onclick="teacherTab='main'; renderApp()"
+        >
+          Dashboard
+        </button>
+
+        <button
+          class="px-4 py-2 rounded-lg transition-colors duration-200"
+          style="
+            background-color: ${teacherTab === 'profile' ? 'var(--primary)' : 'var(--surface)'}; 
+            color: ${teacherTab === 'profile' ? 'var(--on-primary)' : 'var(--on-surface)'};"
+          onclick="teacherTab='profile'; renderApp()"
+        >
+          Profile
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="mt-4">
+        ${teacherTab === 'main'
+          ? renderTeacherQuizList()
+          : renderTeacherProfile()}
+      </div>
+
+    </div>
+  `;
+}
+
+
+function renderTeacherProfile() {
+  const t = getTeacherProfile();
+
+  return `
+    <div class="p-4 rounded-xl bg-white shadow space-y-3">
+      <h2 class="text-xl font-bold">Teacher Profile</h2>
+
+      <div>
+        <label class="block text-sm font-semibold">Name</label>
+        <input id="teacher-name"
+          class="w-full p-2 border rounded"
+          value="${t.name || ""}">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold">Subject</label>
+        <input id="teacher-subject"
+          class="w-full p-2 border rounded"
+          value="${t.subject || ""}">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold">School</label>
+        <input id="teacher-school"
+          class="w-full p-2 border rounded"
+          value="${t.school || ""}">
+      </div>
+
+      <button class="mt-2 px-4 py-2" style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+        onclick="
+          saveTeacherProfile({
+            name: document.getElementById('teacher-name').value.trim(),
+            subject: document.getElementById('teacher-subject').value.trim(),
+            school: document.getElementById('teacher-school').value.trim()
+          })
+        ">
+        Save Profile
+      </button>
+    </div>
+  `;
+}
+
+
+function getTeacherProfile() {
+  return JSON.parse(localStorage.getItem("teacherProfile") || "{}");
+}
+
+function saveTeacherProfile(profile) {
+  localStorage.setItem("teacherProfile", JSON.stringify(profile));
+  teacherTab = "profile";
+  renderApp();
+}
+
+
+function renderTeacherQuizList() {
   const teacherQuizzes = getTeacherQuizzes();
 
   const quizListHTML = teacherQuizzes.length
@@ -571,7 +809,7 @@ function renderTeacherView() {
     <div class="w-full h-full overflow-auto p-6" style="background: var(--background); font-family: var(--font-family); font-size: var(--font-size); line-height: var(--line-height);">
       <div class="max-w-2xl mx-auto fade-in">
         <button id="backBtnTeacherQuiz"
-                style="display:none; position:fixed; top:16px; left:16px; z-index:1000; padding:8px 14px; border-radius:999px; background: var(--card-bg); font-weight:600; cursor:pointer; border:1px solid var(--primary);">
+                style="display:none; position:fixed; top:60px; left:16px; z-index:1000; padding:8px 14px; border-radius:999px; background: var(--card-bg); font-weight:600; cursor:pointer; border:1px solid var(--primary);">
           ← Back
         </button>
 
@@ -581,7 +819,7 @@ function renderTeacherView() {
 
         <button onclick="showTeacherScoresView()"
                 class="w-full py-3 rounded-xl font-semibold"
-                style="background: var(--card-bg); color: var(--text); box-shadow:0 6px 18px rgba(0,0,0,.1);">
+                style="background: var(--primary); color: var(--text); box-shadow:0 6px 18px rgba(0,0,0,.1);">
           📊 View Student Scores
         </button>
 
@@ -951,47 +1189,84 @@ function bindTeacherViewEvents() {
 }
 
 async function loadStudentQuiz() {
+  const quizId = document.getElementById("student-quiz-id").value.trim();
 
-  // 1️⃣ Require student info
-  if (!currentStudent.name || !currentStudent.id) {
+  if (!quizId) {
+    document.getElementById("student-error").innerText = "Enter a quiz ID";
+    return;
+  }
+
+  if (!window.currentStudent || !window.currentStudent.name || !window.currentStudent.id) {
+    pendingQuizId = quizId;
     openStudentInfoModal();
     return;
   }
 
-  // 2️⃣ Get quiz ID FIRST
-  const quizId = document.getElementById("student-quiz-id").value.trim();
+  try {
+    const res = await fetch(
+      `https://quiz-backend.espaderario.workers.dev/api/quizzes/${quizId}`
+    );
 
-  if (!quizId) {
-    alert("Please enter a quiz ID.");
-    return;
+    if (!res.ok) {
+      document.getElementById("student-error").innerText = "Quiz not found";
+      return;
+    }
+
+    const data = await res.json();
+
+    quizQuestions = data.questions;
+    quizIds = quizId;
+    currentQuizId = quizId;
+    quizIndex = 0;
+    quizScore = 0;
+    isQuizPreview = false;
+    isStudentLocked = true;
+
+    currentView = "teacher-quiz";
+    renderApp();
+
+  } catch (err) {
+    document.getElementById("student-error").innerText = "Network error";
   }
-
-  currentQuizId = quizId;
-
-  // 3️⃣ Fetch quiz
-  const res = await fetch(
-    `https://quiz-backend.espaderario.workers.dev/api/quizzes/${quizId}`
-  );
-
-  if (!res.ok) {
-    document.getElementById("student-error").innerText = "Quiz not found";
-    return;
-  }
-
-  const data = await res.json();
-
-  quizQuestions = data.questions;
-  quizIndex = 0;
-  quizScore = 0;
-  isQuizPreview = false;
-
-  isStudentLocked = true;
-
-  currentView = "teacher-quiz";
-  renderApp();
 }
 
+async function loadStudentQuiz(quizIdParam) {
+  const quizId = quizIdParam || document.getElementById("student-quiz-id").value.trim();
 
+  if (!quizId) {
+    document.getElementById("student-error").innerText = "Enter a quiz ID";
+    return;
+  }
+
+  if (!window.currentStudent || !window.currentStudent.name || !window.currentStudent.id) {
+    pendingQuizId = quizId;
+    openStudentInfoModal();
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://quiz-backend.espaderario.workers.dev/api/quizzes/${quizId}`);
+    if (!res.ok) {
+      document.getElementById("student-error").innerText = "Quiz not found";
+      return;
+    }
+
+    const data = await res.json();
+
+    quizQuestions = data.questions;
+    currentQuizId = quizId;
+    quizIndex = 0;
+    quizScore = 0;
+    isQuizPreview = false;
+    isStudentLocked = true;
+
+    currentView = "teacher-quiz";
+    renderApp();
+
+  } catch (err) {
+    document.getElementById("student-error").innerText = "Network error";
+  }
+}
 
 
 function renderTeacherQuizView() {
@@ -1029,19 +1304,32 @@ function renderTeacherQuizView() {
 }
 
 function finishStudentQuiz() {
-saveStudentScore({
-  studentName: currentStudent.name,
-  studentId: currentStudent.id,
-  quizId: currentQuizId,
-  score: quizScore,
-  total: quizQuestions.length,
-  date: Date.now()
-});
+  if (!currentQuizId) {
+    console.error("Cannot finish quiz: currentQuizId is missing");
+    alert("Quiz ID is missing. Score will not be saved.");
+    return;
+  }
+
+  if (!window.currentStudent || !window.currentStudent.id) {
+    alert("Cannot save score: student info missing!");
+    return;
+  }
+
+  saveStudentScore({
+    studentName: window.currentStudent.name,
+    studentId: window.currentStudent.id,
+    quizId: currentQuizId,
+    score: quizScore,
+    total: quizQuestions.length,
+    date: Date.now()
+  });
 
   currentView = "student-score-history";
   renderApp();
   populateStudentScores();
 }
+
+
 
 
 function answerTeacherQuiz(selectedLetter) {
@@ -1076,30 +1364,36 @@ function answerTeacherQuiz(selectedLetter) {
 
 
 function saveStudentScore(record) {
-  const key = "studentQuizScores";
-  const scores = JSON.parse(localStorage.getItem(key) || "[]");
-
-  const student = JSON.parse(sessionStorage.getItem("currentStudent") || "{}");
-
+  const student = window.currentStudent || JSON.parse(localStorage.getItem("currentStudent") || "{}");
   if (!student.name || !student.id) {
-    alert("Student information missing!");
+    alert("Student information missing! Cannot save score.");
     return;
   }
 
+  if (!record.quizId) {
+    console.error("Cannot save score: quizId is missing", record);
+    return;
+  }
+
+  const scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+
+
+  const cleanedScores = scores.filter(s => s.quizId != null);
+
   const scoreRecord = {
-    id: crypto.randomUUID(), 
+    id: crypto.randomUUID(),
     ...record,
     studentName: student.name,
     studentId: student.id
   };
 
-  scores.push(scoreRecord);
-  localStorage.setItem(key, JSON.stringify(scores));
+  cleanedScores.push(scoreRecord);
+  localStorage.setItem("studentQuizScores", JSON.stringify(cleanedScores));
 
-  if (currentView === "student-score-history") {
-    populateStudentScores();
-  }
+  if (currentView === "student-score-history") populateStudentScores();
 }
+
+
 
 
 function showStudentScores() {
@@ -1109,51 +1403,44 @@ function showStudentScores() {
 }
 
 function showStudentScoresByQuiz(quizId) {
+  const student = window.currentStudent || JSON.parse(localStorage.getItem("currentStudent") || "{}");
+  if (!student.id) {
+    alert("Student information missing!");
+    return;
+  }
+
   const allScores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
   const container = document.getElementById("student-score-container");
   if (!container) return;
 
   const scores = allScores.filter(
-    s => s.studentId === currentStudent.id && s.quizId === quizId
+    s => s.studentId === student.id && s.quizId === quizId
   );
 
   if (!scores.length) {
-    container.innerHTML = `
-      <p style="color:var(--secondary);">
-        No attempts for this quiz yet.
-      </p>
-    `;
+    container.innerHTML = `<p style="color:var(--secondary);">No attempts for this quiz yet.</p>`;
     return;
   }
 
   container.innerHTML = `
     <h3 class="mb-4 text-lg font-semibold">📘 Quiz: ${quizId}</h3>
-
     <ul class="flex flex-col gap-3">
       ${scores.map(s => `
-  <li class="p-4 rounded-xl flex justify-between items-start"
-      style="background:var(--card-bg);">
-    <div>
-      <div><strong>Score:</strong> ${s.score} / ${s.total}</div>
-      <div style="color:var(--secondary); font-size:.9rem;">
-        ${new Date(s.date).toLocaleString()}
-      </div>
-    </div>
-
-<button
-  onclick="hideStudentScoreForMe('${s.id}')"
-  class="px-3 py-1 rounded-lg text-sm"
-  style="background:rgba(239,68,68,.15); color:#dc2626;">
-  Delete
-</button>
-  </li>
-`).join("")}
+        <li class="p-4 rounded-xl flex justify-between items-start" style="background:var(--card-bg);">
+          <div>
+            <div><strong>Score:</strong> ${s.score} / ${s.total}</div>
+            <div style="color:var(--secondary); font-size:.9rem;">
+              ${new Date(s.date).toLocaleString()}
+            </div>
+          </div>
+          <button onclick="hideStudentScoreForMe('${s.id}')" class="px-3 py-1 rounded-lg text-sm"
+                  style="background:rgba(239,68,68,.15); color:#dc2626;">
+            Delete
+          </button>
+        </li>
+      `).join("")}
     </ul>
-
-    <button
-      onclick="populateStudentScores()"
-      class="mt-6 px-4 py-2 rounded-xl"
-      style="background:var(--primary); color:white;">
+    <button onclick="populateStudentScores()" class="mt-6 px-4 py-2 rounded-xl" style="background:var(--primary); color:white;">
       ← Back to All Scores
     </button>
   `;
@@ -1166,15 +1453,21 @@ function showTeacherScoresView() {
 }
 
 function populateStudentScores() {
+  const student = window.currentStudent || JSON.parse(localStorage.getItem("currentStudent") || "{}");
+  if (!student.id) {
+    alert("Student information missing!");
+    return;
+  }
+
   const allScores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
   const container = document.getElementById("student-score-container");
   if (!container) return;
 
-  const student = JSON.parse(sessionStorage.getItem("currentStudent") || "{}");
   const hiddenScores = JSON.parse(localStorage.getItem(`hiddenScores_${student.id}`) || "[]");
 
-  const studentScores = allScores
-    .filter(s => s.studentId === student.id && !hiddenScores.includes(s.id));
+  const studentScores = allScores.filter(
+    s => s.studentId === student.id && !hiddenScores.includes(s.id) && s.quizId != null
+  );
 
   if (!studentScores.length) {
     container.innerHTML = `<p style="color:var(--secondary);">You haven't taken any quizzes yet.</p>`;
@@ -1289,8 +1582,12 @@ function toggleQuizSection(quizId) {
 }
 
 function hideStudentScoreForMe(scoreId) {
-  const student = JSON.parse(sessionStorage.getItem("currentStudent") || "{}");
-  if (!student.id) return;
+  // Ensure we have a valid student object
+  const student = window.currentStudent || JSON.parse(localStorage.getItem("currentStudent") || "{}");
+  if (!student || !student.id) {
+    alert("Student information missing!");
+    return;
+  }
 
   const key = `hiddenScores_${student.id}`;
   const hiddenScores = JSON.parse(localStorage.getItem(key) || "[]");
@@ -1298,8 +1595,10 @@ function hideStudentScoreForMe(scoreId) {
   if (!hiddenScores.includes(scoreId)) hiddenScores.push(scoreId);
   localStorage.setItem(key, JSON.stringify(hiddenScores));
 
-  populateStudentScores(); // refresh view
+  // Ensure the UI refresh uses the latest student data
+  populateStudentScores();
 }
+
 
 
 function deleteStudentScoreById(scoreId) {
@@ -1326,12 +1625,17 @@ function deleteStudentScore(index) {
   if (currentView === "student-score-history") populateStudentScores();
   else if (currentView === "teacher-view-scores") populateTeacherStudentScores();
 }
-
 function clearMyStudentScores() {
+  const student = window.currentStudent || JSON.parse(localStorage.getItem("currentStudent") || "{}");
+  if (!student || !student.id) {
+    alert("Student information missing!");
+    return;
+  }
+
   if (!confirm("Delete all your quiz history?")) return;
 
   const scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
-  const filtered = scores.filter(s => s.studentId !== currentStudent.id);
+  const filtered = scores.filter(s => s.studentId !== student.id);
 
   localStorage.setItem("studentQuizScores", JSON.stringify(filtered));
   populateStudentScores();
@@ -1343,6 +1647,7 @@ function clearAllStudentScores() {
   localStorage.removeItem("studentQuizScores");
   populateTeacherStudentScores();
 }
+
 
 
 function showScoresView() {
@@ -2234,6 +2539,11 @@ function generateQuizQuestions(cards) {
   });
 }
 
+function toggleTimerVisibility() {
+  timerHidden = !timerHidden;
+  renderApp();
+}
+
 function renderQuizView() {
   const q = quizQuestions[quizIndex];
   const progress = ((quizIndex + 1) / quizQuestions.length) * 100;
@@ -2250,137 +2560,76 @@ function renderQuizView() {
 
           <!-- Header -->
           <div class="flex items-center justify-between mb-4">
-
             <button id="exitQuizBtn"
               class="px-4 py-2 rounded-lg text-sm"
-              style="background:${bg};color:${text};
-              box-shadow:0 2px 8px rgba(0,0,0,.08);">
+              style="background:${bg};color:${text}; box-shadow:0 2px 8px rgba(0,0,0,.08);">
               ← Exit
             </button>
 
             <!-- Timer Pill -->
-<div
-  id="floating-timer"
-  style="
-    position:fixed;
-    top:16px;
-    right:16px;
-    z-index:1000;
-
-    width:80px;
-    height:80px;
-    border-radius:50%;
-
-    background:${bg};
-    box-shadow:0 10px 30px rgba(0,0,0,.2);
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-
-    font-weight:700;
-    color:${primary};
-  "
->
-  <div style="font-size:1.2rem;">⏱</div>
-  <div
-    id="study-timer"
-    style="
-      font-size:1.2rem;
-      margin-top:4px;
-      letter-spacing:1px;
-    "
-  >
-    ${formatTime(studyTimer.remaining)}
-  </div>
-</div>
-
-
+            <div id="floating-timer"
+              style="
+                position:fixed;
+                top:16px;
+                right:16px;
+                z-index:1000;
+                width:80px;
+                height:80px;
+                border-radius:50%;
+                background:${bg};
+                box-shadow:0 10px 30px rgba(0,0,0,.2);
+                display:${timerHidden ? "none" : "flex"};
+                align-items:center;
+                justify-content:center;
+                flex-direction:column;
+                font-weight:700;
+                color:${primary};
+              "
+            >
+              <div style="font-size:1.2rem;">⏱</div>
+              <div id="study-timer" style="font-size:1.2rem; margin-top:4px; letter-spacing:1px;">
+                ${formatTime(studyTimer.remaining)}
+              </div>
+            </div>
 
             <div class="text-right text-sm">
-              <p style="color:${sub};">
-                Q ${quizIndex + 1} / ${quizQuestions.length}
-              </p>
-              <p style="color:${primary};font-weight:600;">
-                ⭐ ${quizScore}
-              </p>
+              <p style="color:${sub};">Q ${quizIndex + 1} / ${quizQuestions.length}</p>
+              <p style="color:${primary}; font-weight:600;">⭐ ${quizScore}</p>
             </div>
           </div>
 
-          <!-- Timer Controls Card -->
-<div
-  class="flex flex-wrap gap-2 items-center justify-center mb-5 p-4 rounded-xl mx-auto"
-  style="
-    background:${bg};
-    box-shadow:0 4px 14px rgba(0,0,0,.08);
-    max-width:420px;
-  "
->
-  <input
-    type="number"
-    id="timer-hours"
-    min="0"
-    placeholder="H"
-    class="w-16 px-2 py-2 rounded-lg text-center"
-  />
+          <!-- Dropdown to show/hide timer controls -->
+          <div class="mb-4 text-center">
+            <label for="timerControlDropdown" style="margin-right:8px; font-weight:500;">Timer Controls:</label>
+            <select id="timerControlDropdown" onchange="toggleTimerControls(this.value)" style="padding:6px 12px; border-radius:8px; border:1px solid #ccc;">
+              <option value="show" ${showTimerControls ? "selected" : ""}>Show</option>
+              <option value="hide" ${!showTimerControls ? "selected" : ""}>Hide</option>
+            </select>
+                        <button id="toggleTimerBtn" onclick="toggleTimerVisibility()" style="padding:10px 16px; border-radius:10px; background:rgba(0,0,0,.08); color:${text}; font-weight:500; box-shadow:0 2px 6px rgba(0,0,0,.05); transition:0.2s;">
+              ${timerHidden ? "Show Timer" : "Hide Timer"}
+            </button>
+          </div>
 
-  <input
-    type="number"
-    id="timer-minutes"
-    min="0"
-    max="59"
-    placeholder="M"
-    class="w-16 px-2 py-2 rounded-lg text-center"
-  />
+          <!-- Timer Controls Card (Responsive) -->
+          <div id="timerControlsContainer" style="display:${showTimerControls ? "flex" : "none"}; flex-wrap:wrap; gap:8px; align-items:center; justify-center; margin:0 auto 20px; padding:16px; border-radius:16px; background:${bg}; box-shadow:0 4px 14px rgba(0,0,0,.08); max-width:420px;">
+            <!-- Timer Inputs -->
+            <input type="number" id="timer-hours" min="0" placeholder="H" style="width:60px; padding:8px; border-radius:8px; border:1px solid #ccc; text-align:center;" />
+            <input type="number" id="timer-minutes" min="0" max="59" placeholder="M" style="width:60px; padding:8px; border-radius:8px; border:1px solid #ccc; text-align:center;" />
 
-  <button
-    class="px-3 py-2 rounded-lg text-sm font-medium"
-    style="background:${primary};color:white;"
-    onclick="applyTimerSettings()"
-  >
-    Set
-  </button>
-
-  <button
-    class="px-3 py-2 rounded-lg text-sm"
-    style="background:rgba(0,0,0,.08);color:${text};"
-    onclick="startStudyTimer()"
-  >
-    ▶ Start
-  </button>
-
-  <button
-    class="px-3 py-2 rounded-lg text-sm"
-    style="background:rgba(0,0,0,.08);color:${text};"
-    onclick="stopStudyTimer()"
-  >
-    ⏸ Pause
-  </button>
-</div>
-
+            <!-- Action Buttons -->
+            <button onclick="applyTimerSettings()" style="padding:10px 16px; border-radius:10px; background:${primary}; color:white; font-weight:500; box-shadow:0 2px 6px rgba(0,0,0,.1); transition:0.2s;">Set</button>
+            <button onclick="startStudyTimer()" style="padding:10px 16px; border-radius:10px; background:rgba(0,0,0,.08); color:${text}; font-weight:500; box-shadow:0 2px 6px rgba(0,0,0,.05); transition:0.2s;">▶ Start</button>
+            <button onclick="stopStudyTimer()" style="padding:10px 16px; border-radius:10px; background:rgba(0,0,0,.08); color:${text}; font-weight:500; box-shadow:0 2px 6px rgba(0,0,0,.05); transition:0.2s;">⏸ Pause</button>
+          </div>
 
           <!-- Progress -->
-          <div class="w-full h-2 rounded-full mb-6"
-            style="background:rgba(0,0,0,.12);">
-            <div class="h-full rounded-full"
-              style="width:${progress}%;
-              background:${primary};
-              transition:width .3s;">
-            </div>
+          <div class="w-full h-2 rounded-full mb-6" style="background:rgba(0,0,0,.12);">
+            <div class="h-full rounded-full" style="width:${progress}%; background:${primary}; transition:width .3s;"></div>
           </div>
 
           <!-- Question -->
-          <div class="p-6 rounded-2xl mb-8"
-            style="background:${bg};
-            box-shadow:0 10px 28px rgba(0,0,0,.12);">
-            <h2
-              style="
-                font-size:calc(var(--font-size) * 1.5);
-                color:${text};
-                line-height:1.6;
-              "
-            >
+          <div class="p-6 rounded-2xl mb-8" style="background:${bg}; box-shadow:0 10px 28px rgba(0,0,0,.12);">
+            <h2 style="font-size:calc(var(--font-size) * 1.5); color:${text}; line-height:1.6;">
               ${q.question}
             </h2>
           </div>
@@ -2388,21 +2637,15 @@ function renderQuizView() {
           <!-- Options -->
           <div class="grid gap-4">
             ${q.options.map(opt => `
-              <button
-                class="quiz-option"
-                data-answer="${opt}"
-                style="
-                  padding:16px;
-                  border-radius:var(--radius);
-                  background:${bg};
-                  color:${text};
-                  font-size:var(--font-size);
-                  box-shadow:0 4px 12px rgba(0,0,0,.08);
-                  transition:transform .15s, box-shadow .15s;
-                "
-              >
-                ${opt}
-              </button>
+              <button type="button" class="quiz-option" data-answer="${opt}" style="
+                padding:16px;
+                border-radius:var(--radius);
+                background:${bg};
+                color:${text};
+                font-size:var(--font-size);
+                box-shadow:0 4px 12px rgba(0,0,0,.08);
+                transition:transform .15s, box-shadow .15s;
+              ">${opt}</button>
             `).join("")}
           </div>
 
@@ -2412,6 +2655,12 @@ function renderQuizView() {
   `;
 }
 
+function toggleTimerControls(value) {
+  showTimerControls = value === "show";
+  const container = document.getElementById("timerControlsContainer");
+  if (container) container.style.display = showTimerControls ? "flex" : "none";
+  renderApp();
+}
 
 
 function renderQuizResultView() {
@@ -3217,43 +3466,51 @@ renderApp();
   }
   // QUIZ option click handlers
   if (currentView === 'quiz') {
-    document.querySelectorAll(".quiz-option").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const selected = btn.dataset.answer;
-        const correct = quizQuestions[quizIndex].correct;
+  document.querySelectorAll(".quiz-option").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault(); // Just in case
 
-        // Disable all options
-        document.querySelectorAll(".quiz-option").forEach(b => {
-          b.classList.add("disabled");
-        });
+      // Ignore clicks if already disabled
+      if (btn.classList.contains("disabled")) return;
 
-        // Mark answers
-        if (selected === correct) {
-          btn.classList.add("correct");
-          quizScore++;
-        } else {
-          btn.classList.add("wrong");
+      const selected = btn.dataset.answer;
+      const correct = quizQuestions[quizIndex].correct;
 
-          document.querySelectorAll(".quiz-option").forEach(b => {
-            if (b.dataset.answer === correct) {
-              b.classList.add("correct");
-            }
-          });
-        }
-
-        // Next question delay
-        setTimeout(() => {
-          quizIndex++;
-
-          if (quizIndex >= quizQuestions.length) {
-            currentView = "quiz-result";
-          }
-
-          renderApp();
-        }, 800);
+      // Disable all options immediately
+      document.querySelectorAll(".quiz-option").forEach(b => {
+        b.classList.add("disabled");
+        b.style.pointerEvents = "none"; // extra safety
       });
+
+      // Add feedback animation
+      btn.style.transform = "scale(1.05)";
+      setTimeout(() => btn.style.transform = "scale(1)", 200);
+
+      // Mark answers
+      if (selected === correct) {
+        btn.classList.add("correct");
+        quizScore++;
+      } else {
+        btn.classList.add("wrong");
+        document.querySelectorAll(".quiz-option").forEach(b => {
+          if (b.dataset.answer === correct) {
+            b.classList.add("correct");
+          }
+        });
+      }
+
+      // Move to next question after short delay
+      setTimeout(() => {
+        quizIndex++;
+        if (quizIndex >= quizQuestions.length) {
+          currentView = "quiz-result";
+        }
+        renderApp();
+      }, 800);
     });
-  }
+  });
+}
+
 const exitQuizBtn = document.getElementById('exitQuizBtn');
 if (exitQuizBtn) {
   exitQuizBtn.addEventListener('click', () => {
