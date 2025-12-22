@@ -23,8 +23,15 @@ self.addEventListener("activate", e => {
   e.waitUntil(self.clients.claim());
 });
 
-self.addEventListener("fetch", e => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+self.addEventListener("fetch", event => {
+  const url = new URL(event.request.url);
+
+  
+  if (url.origin.includes("quiz-backend.espaderario.workers.dev")) {
+    return; 
+  }
+
+  event.respondWith(
+    fetch(event.request)
   );
 });

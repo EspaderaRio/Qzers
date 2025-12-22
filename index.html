@@ -16,21 +16,21 @@
 
   window.elementSdk = {
     init: function (api) {
-      // Store defaults safely
+      
       if (api && api.defaultConfig) {
         config = Object.assign({}, api.defaultConfig);
       } else {
         config = {};
       }
 
-      // Expose fake edit panel updates if needed
+    
       window.__elementApi = api;
     },
 
     setConfig: function (newConfig) {
       config = Object.assign({}, config, newConfig);
 
-      // Notify app if config changes
+      
       if (
         window.__elementApi &&
         typeof window.__elementApi.onConfigChange === "function"
@@ -48,21 +48,49 @@
 
 <script>
 (function () {
-  var STORAGE_KEY = "flashcards_data";
+
+
+window.getUser = function () {
+  return JSON.parse(localStorage.getItem("user"));
+};
+
+window.setUser = function (user) {
+  localStorage.setItem("user", JSON.stringify(user));
+};
+
+window.logoutUser = function () {
+  localStorage.removeItem("user");
+};
+
+if (!getUser()) {
+  const role = prompt("Enter role: teacher or student", "student");
+
+  setUser({
+    id: crypto.randomUUID(),
+    role: role === "teacher" ? "teacher" : "student",
+    name: role === "teacher" ? "Teacher Demo" : "Student Demo"
+  });
+}
+
+  function getStorageKey() {
+    const user = getUser();
+    return user ? `flashcards_${user.id}` : "flashcards_guest";
+  }
+
   var handler = null;
   var data = [];
 
   function load() {
     try {
-      var stored = localStorage.getItem(STORAGE_KEY);
+      var stored = localStorage.getItem(getStorageKey());
       data = stored ? JSON.parse(stored) : [];
-    } catch (e) {
+    } catch {
       data = [];
     }
   }
 
   function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(getStorageKey(), JSON.stringify(data));
   }
 
   function notify() {
@@ -105,10 +133,7 @@
         return Promise.resolve({ isOk: false });
       }
 
-      data = data.filter(function (d) {
-        return d.id !== opts.id;
-      });
-
+      data = data.filter(d => d.id !== opts.id);
       save();
       if (!silent) notify();
 
@@ -120,12 +145,9 @@
         return Promise.resolve({ isOk: false });
       }
 
-      for (var i = 0; i < data.length; i++) {
-        if (data[i].id === updatedItem.id) {
-          data[i] = updatedItem;
-          break;
-        }
-      }
+      data = data.map(d =>
+        d.id === updatedItem.id ? updatedItem : d
+      );
 
       save();
       notify();
@@ -137,8 +159,10 @@
       return data.slice();
     }
   };
+
 })();
 </script>
+
   <script src="tailwindcss.js"></script>
 
   <style>@view-transition { navigation: auto; }</style>

@@ -1,3 +1,199 @@
+const TEACHER_DRAFT_KEY = "teacher_quiz_draft";
+
+function shuffleArray(array) {
+  return array
+    .map(value => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+}
+
+function saveTeacherDraft(title, questions, timeLimit = 0) {
+  localStorage.setItem(
+    TEACHER_DRAFT_KEY,
+    JSON.stringify({ title, questions, timeLimit })
+  );
+}
+
+function loadTeacherDraft() {
+  const raw = localStorage.getItem(TEACHER_DRAFT_KEY);
+  return raw ? JSON.parse(raw) : { title: "", questions: [], timeLimit: 0 };
+}
+
+
+function clearTeacherDraft() {
+  localStorage.removeItem(TEACHER_DRAFT_KEY);
+}
+
+function initTeacherView() {
+  // 1️⃣ Restore draft
+  const draft = loadTeacherDraft();
+  if (draft) {
+    teacherQuestions = draft.questions || teacherQuestions;
+    window._teacherTitleDraft = draft.title || "";
+  } else {
+    window._teacherTitleDraft = "";
+  }
+
+  // 2️⃣ Setup back button AFTER render
+  requestAnimationFrame(() => {
+    const backBtn = document.getElementById("backBtnTeacherQuiz");
+    if (!backBtn) return;
+
+    backBtn.style.display = "block";
+
+    backBtn.onclick = () => {
+      currentView = "home";
+      renderApp();
+    };
+  });
+}
+
+
+function renderStudentView() {
+  const student = window.currentStudent || { name: "", id: "" };
+
+  return `
+    <div class="w-full min-h-screen flex items-center justify-center p-4"
+         style="background-color: var(--background); font-family: var(--font-family); font-size: var(--font-size); line-height: var(--line-height);">
+      <div class="w-full max-w-md p-6 fade-in space-y-6"
+           style="background-color: var(--card-bg); border-radius: var(--radius);">
+
+        <!-- Logged in info -->
+        ${student.name && student.id ? `
+        <div style="color: var(--primary); font-size: 0.875rem;">
+          ✅ Logged in as: ${student.name} (${student.id})
+        </div>` : ""}
+
+        <!-- Student Info Modal -->
+        <div id="student-info-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+          <div style="background-color: var(--card-bg); border-radius: var(--radius);" class="p-6 w-full max-w-sm mx-2">
+            <h3 style="color: var(--text);" class="text-lg font-semibold mb-4">👤 Student Information</h3>
+            <input
+              id="student-name-input"
+              placeholder="Full Name"
+              style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+              class="w-full mb-3 px-3 py-2"
+            />
+            <input
+              id="student-id-input"
+              placeholder="Student ID"
+              style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+              class="w-full mb-4 px-3 py-2"
+            />
+            <div class="flex justify-end gap-2">
+              <button onclick="closeStudentInfoModal()"
+                      style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+                      class="px-4 py-2">
+                Cancel
+              </button>
+              <button onclick="confirmStudentInfo()"
+                      style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+                      class="px-4 py-2">
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz Join Section -->
+        <h2 style="color: var(--text);" class="text-2xl font-semibold">🧠 Join Quiz</h2>
+        <p style="color: var(--secondary-text);" class="text-sm mb-4">
+          Enter the quiz ID provided by your teacher
+        </p>
+
+        <input
+          id="student-quiz-id"
+          placeholder="Quiz ID"
+          style="background-color: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+          class="w-full mb-4 px-4 py-3"
+        />
+
+        <button
+          onclick="loadStudentQuiz()"
+          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+          class="w-full py-3 mb-2 font-semibold"
+        >
+          Start Quiz
+        </button>
+
+        <button 
+          onclick="currentView='student-score-history'; renderApp();"
+          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+          class="w-full py-3 mb-2 font-semibold"
+        >
+          📊 View Score History
+        </button>
+
+        <button
+          onclick="backStudentBtn()"
+          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
+          class="w-full py-3 mb-2 font-semibold"
+        >
+          Back
+        </button>
+
+        <div id="student-error" style="color: red;" class="mt-4 text-center"></div>
+      </div>
+    </div>
+  `;
+}
+
+function openStudentInfoModal() {
+  document.getElementById("student-info-modal").classList.remove("hidden");
+}
+
+function closeStudentInfoModal() {
+  document.getElementById("student-info-modal").classList.add("hidden");
+}
+
+function confirmStudentInfo() {
+  const nameInput = document.getElementById("student-name-input");
+  const idInput = document.getElementById("student-id-input");
+
+  if (!nameInput || !idInput) return;
+
+  const name = nameInput.value.trim();
+  const id = idInput.value.trim();
+
+  if (!name || !id) {
+    alert("Please enter your name and student ID");
+    return;
+  }
+
+  currentStudent.name = name;
+  currentStudent.id = id;
+  isStudentLocked = true;
+
+  sessionStorage.setItem(
+    "currentStudent",
+    JSON.stringify({ name, id })
+  );
+
+  closeStudentInfoModal();
+}
+
+
+
+
+function saveStudentInfo() {
+  const name = document.getElementById("student-name").value.trim();
+  const id = document.getElementById("student-id").value.trim();
+
+  if (!name || !id) return alert("Please fill in all fields.");
+
+  
+  sessionStorage.setItem("currentStudent", JSON.stringify({ name, id }));
+
+ 
+  document.getElementById("student-info-form").style.display = "none";
+  startStudentQuiz(); 
+}
+
+function backStudentBtn() {
+  currentView = 'home'; 
+  renderApp();         
+}
+
 
 const AI_API_URL =
   "https://flashcards-ai-backend.onrender.com/api/generate-cards";
@@ -174,7 +370,7 @@ const THEME_PRESETS = {
 
 let config = { ...defaultConfig };
 let allData = [];
-let currentView = 'subjects';
+let currentView = 'home';
 let currentSubject = null;
 let currentSet = null;
 let currentCardIndex = 0;
@@ -184,6 +380,20 @@ let quizIndex = 0;
 let quizScore = 0;
 let quizQuestions = [];
 let deferredInstallPrompt = null;
+let teacherQuestions = [];
+let saveTimeout;
+let teacherDraftSaveTimer;
+let isQuizPreview = false;
+let teacherQuizData = null;
+let teacherQuizIndex = 0;
+let teacherQuizScore = 0;
+let isTeacherQuiz = false;
+let currentQuizId = null;
+let isStudentLocked = false;
+let currentStudent = {
+  name: "",
+  id: ""
+};
 let studyTimer = {
   duration: 20 * 60,
   remaining: 20 * 60,
@@ -191,6 +401,1056 @@ let studyTimer = {
   running: false,
   startTime: null
 };
+
+function renderHomeView() {
+  return `
+    <div class="w-full h-full flex items-center justify-center p-6">
+      <div class="max-w-md w-full text-center fade-in">
+
+        <h1
+          style="
+            font-size:calc(var(--font-size) * 2.2);
+            color:var(--text);
+            margin-bottom:12px;
+          "
+        >
+          📚 Study Hub
+        </h1>
+
+        <p
+          style="
+            color:var(--secondary, #64748b);
+            margin-bottom:32px;
+          "
+        >
+          Choose a study mode to begin
+        </p>
+
+        <div class="flex flex-col gap-4">
+
+          <!-- Flashcards -->
+          <button
+            id="openFlashcardsBtn"
+            class="w-full py-4 rounded-xl font-semibold"
+            style="
+              background:var(--primary);
+              color:white;
+              box-shadow:0 10px 30px rgba(37,99,235,.35);
+              font-size:calc(var(--font-size) * 1.1);
+            "
+          >
+            🃏 Flashcards
+          </button>
+
+          <!-- Teacher Quiz -->
+          <button
+            onclick="openTeacherQuiz()"
+            class="w-full py-4 rounded-xl font-semibold"
+            style="
+              background:var(--card-bg);
+              color:var(--text);
+              box-shadow:0 6px 18px rgba(0,0,0,.1);
+            "
+          >
+            👩‍🏫 Create Quiz (Teacher)
+          </button>
+
+          <!-- Student Quiz -->
+          <button
+            onclick="openStudentQuiz()"
+            class="w-full py-4 rounded-xl font-semibold"
+            style="
+              background:var(--card-bg);
+              color:var(--text);
+              box-shadow:0 6px 18px rgba(0,0,0,.1);
+            "
+          >
+            👨‍🎓 Join Quiz (Student)
+          </button>
+
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+function openTeacherQuiz() {
+  currentView = "teacher";
+  initTeacherView();
+  renderApp();
+}
+
+function openStudentQuiz() {
+  currentView = "student";
+  renderApp();
+}
+
+function renderTeacherView() {
+  const teacherQuizzes = getTeacherQuizzes();
+
+  const quizListHTML = teacherQuizzes.length
+    ? teacherQuizzes.map(q => `
+        <div class="p-4 rounded-xl flex justify-between items-center" style="background: var(--card-bg);">
+          <div>
+            <div style="font-weight:600; color: var(--text);">${q.title}</div>
+            <code style="font-size:12px; opacity:.7; color: var(--secondary-text);">${q.quizId}</code>
+          </div>
+<div class="flex flex-wrap gap-2">
+  <button 
+    onclick="navigator.clipboard.writeText('${q.quizId}')" 
+    class="px-3 py-1 rounded-full text-sm"
+    style="background: var(--primary); color: white; flex-shrink: 1;"
+  >
+    Copy
+  </button>
+
+  <button 
+    onclick="editTeacherQuiz('${q.quizId}')" 
+    class="px-3 py-1 rounded-full text-sm"
+    style="background: rgba(0,0,0,.08); flex-shrink: 1;"
+  >
+    Edit
+  </button>
+
+  <button 
+    onclick="deleteTeacherQuiz('${q.quizId}')" 
+    class="px-3 py-1 rounded-full text-sm"
+    style="background: rgba(239,68,68,.15); color:#dc2626; flex-shrink: 1;"
+  >
+    Delete
+  </button>
+</div>
+
+        </div>
+      `).join("")
+    : `<p style="color: var(--secondary-text);">No quizzes created yet.</p>`;
+
+  const renderQuestionInputs = () => teacherQuestions.map((q, i) => `
+    <div class="p-4 rounded-xl" style="background: var(--card-bg);">
+      <input
+        placeholder="Question"
+        class="w-full mb-2 px-3 py-2 rounded-lg"
+        style="background: var(--card-bg); color: var(--text); border: 1px solid var(--primary); border-radius: var(--radius);"
+        value="${q.question}"
+        oninput="updateTeacherQuestion(${i}, 'question', this.value)"
+      />
+      ${q.options.map((opt, j) => `
+        <div class="flex items-center mb-2">
+          <span style="width:20px; font-weight:600; color: var(--text);">${String.fromCharCode(65+j)}.</span>
+          <input
+            placeholder="Option ${j + 1}"
+            class="w-full px-3 py-2 rounded-lg"
+            style="background: var(--card-bg); color: var(--text); border: 1px solid var(--primary); border-radius: var(--radius);"
+            value="${opt}"
+            oninput="updateTeacherOption(${i}, ${j}, this.value)"
+          />
+        </div>
+      `).join("")}
+      <input
+        placeholder="Correct answer (letter, e.g., A)"
+        class="w-full px-3 py-2 rounded-lg"
+        style="background: var(--card-bg); color: var(--text); border: 1px solid var(--primary); border-radius: var(--radius);"
+        value="${q.correct}"
+        oninput="updateTeacherQuestion(${i}, 'correct', this.value.toUpperCase())"
+      />
+    </div>
+  `).join("");
+
+  const renderPreview = () => teacherQuestions.length ? teacherQuestions.map((q, i) => `
+    <div class="p-3 mb-3 rounded-lg" style="background: var(--card-bg);">
+      <strong style="color: var(--text);">Q${i + 1}: ${q.question}</strong>
+      <ul style="margin-top:4px; padding-left:18px; color: var(--text);">
+        ${q.options.map((opt, j) => `<li>${String.fromCharCode(65 + j)}. ${opt}</li>`).join("")}
+      </ul>
+      <p style="color: var(--primary); font-size:0.9em;">Answer: ${q.correct}</p>
+    </div>
+  `).join("") : `<p style="color: var(--secondary-text);">No questions to preview.</p>`;
+
+  return `
+    <div class="w-full h-full overflow-auto p-6" style="background: var(--background); font-family: var(--font-family); font-size: var(--font-size); line-height: var(--line-height);">
+      <div class="max-w-2xl mx-auto fade-in">
+        <button id="backBtnTeacherQuiz"
+                style="display:none; position:fixed; top:16px; left:16px; z-index:1000; padding:8px 14px; border-radius:999px; background: var(--card-bg); font-weight:600; cursor:pointer; border:1px solid var(--primary);">
+          ← Back
+        </button>
+
+        <h3 style="font-size:calc(var(--font-size) * 1.2); margin-bottom:12px; color: var(--text);">📋 Your Quizzes</h3>
+        ${quizListHTML}
+        <hr style="margin:24px 0; opacity:.2;" />
+
+        <button onclick="showTeacherScoresView()"
+                class="w-full py-3 rounded-xl font-semibold"
+                style="background: var(--card-bg); color: var(--text); box-shadow:0 6px 18px rgba(0,0,0,.1);">
+          📊 View Student Scores
+        </button>
+
+        <h2 style="font-size:calc(var(--font-size) * 1.8); margin:8px; color: var(--text);">👩‍🏫 Create Quiz</h2>
+        <p style="color: var(--secondary-text); margin-bottom:24px;">Build a quiz and share it with your students</p>
+
+        <input
+          id="quiz-title"
+          placeholder="Quiz title"
+          value="${window._teacherTitleDraft || ""}"
+          class="w-full mb-4 px-4 py-3 rounded-xl"
+          style="background: var(--card-bg); color: var(--text); border-radius: var(--radius); border: 1px solid var(--primary);"
+          oninput="updateTeacherTitle(this.value)"
+        />
+
+        <div class="flex flex-col gap-4 mb-4">${renderQuestionInputs()}</div>
+
+        <button onclick="addTeacherQuestion()"
+                class="w-full py-3 rounded-xl font-semibold"
+                style="background: var(--card-bg); color: var(--text); border:1px solid var(--primary);">
+          ➕ Add Question
+        </button>
+        <button onclick="submitTeacherQuiz()"
+                class="w-full py-4 rounded-xl font-semibold mt-6"
+                style="background: var(--primary); color:white; box-shadow:0 10px 30px rgba(37,99,235,.35);">
+          🚀 Publish Quiz
+        </button>
+
+        <div id="teacher-result" class="mt-6 text-center"></div>
+
+        <hr style="margin:32px 0; opacity:.2;" />
+
+        <h2 style="font-size:calc(var(--font-size) * 1.8); margin-bottom:8px; color: var(--text);">📝 Preview Quiz</h2>
+        <div id="preview-quiz">${renderPreview()}</div>
+
+        <hr style="margin:32px 0; opacity:.2;" />
+
+        <h2 style="font-size:calc(var(--font-size) * 1.8); margin-bottom:8px; color: var(--text);">🤖 AI Quiz Assistant</h2>
+        <p style="color: var(--secondary-text); margin-bottom:12px;">Generate quiz questions automatically for a topic</p>
+        <button onclick="openAIQuizModal()" class="w-full py-3 rounded-xl font-semibold"
+                style="background: rgba(37,99,235,.15); color: var(--primary);">
+          🤖 Generate AI Quiz
+        </button>
+
+        <!-- AI Quiz Modal -->
+        <div id="ai-quiz-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+          <div class="bg-card rounded-xl p-6 w-full max-w-sm mx-2"
+               style="background: var(--card-bg); color: var(--text); border-radius: var(--radius);">
+            <h3 class="text-lg font-semibold mb-4" style="color: var(--text);">🤖 Generate AI Quiz</h3>
+            <input id="ai-quiz-topic-input" placeholder="Topic"
+                   class="w-full mb-3 px-3 py-2 rounded-lg"
+                   style="background: var(--card-bg); color: var(--text); border: 1px solid var(--primary); border-radius: var(--radius);" />
+            <input id="ai-quiz-count-input" type="number" min="1" max="20" placeholder="Number of questions"
+                   class="w-full mb-4 px-3 py-2 rounded-lg"
+                   style="background: var(--card-bg); color: var(--text); border: 1px solid var(--primary); border-radius: var(--radius);" />
+            <div class="flex justify-end gap-2">
+              <button onclick="closeAIQuizModal()"
+                      class="px-4 py-2 rounded-lg"
+                      style="background: var(--card-bg); color: var(--text); border:1px solid var(--primary);">Cancel</button>
+              <button onclick="generateAIQuiz()"
+                      class="px-4 py-2 rounded-lg"
+                      style="background: var(--primary); color:white;">Generate</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="ai-quiz-result" class="mt-4"></div>
+      </div>
+    </div>
+  `;
+}
+
+function openAIQuizModal() {
+  document.getElementById("ai-quiz-modal").classList.remove("hidden");
+}
+
+function closeAIQuizModal() {
+  document.getElementById("ai-quiz-modal").classList.add("hidden");
+}
+
+function updateTeacherQuestion(index, field, value) {
+  teacherQuestions[index][field] = value;
+
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveTeacherDraft(
+      document.getElementById('quiz-title')?.value || '',
+      teacherQuestions
+    );
+  }, 300);
+}
+
+function updateTeacherOption(qIndex, optIndex, value) {
+  teacherQuestions[qIndex].options[optIndex] = value;
+
+  clearTimeout(teacherDraftSaveTimer);
+  teacherDraftSaveTimer = setTimeout(() => {
+    saveTeacherDraft(
+      document.getElementById('quiz-title')?.value || '',
+      teacherQuestions
+    );
+  }, 300);
+}
+
+
+function updateTeacherTitle(title) {
+  window._teacherTitleDraft = title;
+  saveTeacherDraft(title, teacherQuestions);
+}
+
+
+async function generateAIQuiz() {
+  const topicInput = document.getElementById("ai-quiz-topic-input");
+  const countInput = document.getElementById("ai-quiz-count-input");
+
+  const topic = topicInput?.value.trim();
+  const count = Number(countInput?.value) || 5;
+
+  if (!topic) return alert("Topic is required");
+
+  try {
+    const res = await fetch("https://flashcards-ai-backend.onrender.com/api/generate-quiz", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic, numQuestions: count })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "AI backend error");
+    }
+
+    const data = await res.json();
+
+    teacherQuestions = data.questions.map(q => {
+      let options = [...(q.options || [])];
+
+      options = shuffleArray(options);
+
+      const correctText = (q.correct || "").trim().toLowerCase();
+      let correctIndex = options.findIndex(
+        opt => opt.trim().toLowerCase() === correctText
+      );
+
+      if (correctIndex === -1) {
+        correctIndex = Math.floor(Math.random() * options.length);
+      }
+
+      const correctLetter = String.fromCharCode(65 + correctIndex);
+
+      return {
+        question: q.question || "",
+        options,
+        correct: correctLetter
+      };
+    });
+
+    window._teacherTitleDraft = `${topic} Quiz`;
+
+    closeAIQuizModal();
+    topicInput.value = "";
+    countInput.value = "";
+
+    alert(`✅ ${teacherQuestions.length} questions generated!`);
+
+    currentView = "teacher";
+    renderApp();
+  } catch (err) {
+    console.error("AI Quiz generation failed:", err);
+    alert("❌ Failed to generate AI quiz: " + err.message);
+  }
+}
+
+
+
+
+
+
+function previewTeacherQuiz() {
+  const title = document.getElementById("quiz-title")?.value || "Preview Quiz";
+
+  if (teacherQuestions.length === 0) {
+    alert("Add at least one question to preview.");
+    return;
+  }
+
+
+  isQuizPreview = true;
+
+  quizQuestions = teacherQuestions.map(q => ({
+    question: q.question,
+    options: q.options,
+    correct: q.correct
+  }));
+
+  quizIndex = 0;
+  quizScore = 0;
+
+  currentView = "teacher-quiz"; 
+  renderApp();
+}
+
+
+
+async function editTeacherQuiz(quizId) {
+  const res = await fetch(
+    `https://quiz-backend.espaderario.workers.dev/api/quizzes/${quizId}`
+  );
+
+if (!res.ok) {
+  const err = await res.json();
+  alert(err.error || "Failed to update quiz");
+  return;
+}
+
+  const data = await res.json();
+
+  clearTeacherDraft();
+
+  window._teacherEditingQuizId = quizId;
+  window._teacherTitleDraft = data.quiz.title;
+  teacherQuestions = data.questions;
+
+  currentView = "teacher";
+  renderApp();
+}
+
+
+
+
+async function deleteTeacherQuiz(quizId) {
+  if (!confirm("Delete this quiz permanently?")) return;
+
+  await fetch(
+    `https://quiz-backend.espaderario.workers.dev/api/quizzes/${quizId}`,
+    { method: "DELETE" }
+  );
+
+  const user = getUser();
+  const key = `teacher_quizzes_${user.id}`;
+  const quizzes = getTeacherQuizzes().filter(q => q.quizId !== quizId);
+
+  localStorage.setItem(key, JSON.stringify(quizzes));
+  renderApp();
+}
+
+
+function addTeacherQuestion() {
+  teacherQuestions.push({
+    question: "",
+    options: ["", "", "", ""],
+    correct: ""
+  });
+
+  saveTeacherDraft(
+    document.getElementById("quiz-title")?.value || "",
+    teacherQuestions
+  );
+
+  renderApp();
+}
+
+
+async function submitTeacherQuiz() {
+const title = document.getElementById("quiz-title").value.trim();
+
+if (!title || teacherQuestions.length === 0) {
+  alert("Please add a title and at least one question.");
+  return;
+}
+
+const isEditing = !!window._teacherEditingQuizId;
+
+const url = isEditing
+  ? `https://quiz-backend.espaderario.workers.dev/api/quizzes/${window._teacherEditingQuizId}`
+  : "https://quiz-backend.espaderario.workers.dev/api/quizzes";
+
+const method = isEditing ? "PUT" : "POST";
+
+const res = await fetch(url, {
+  method,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    title,
+    questions: teacherQuestions,
+  })
+});
+
+  const data = await res.json();
+
+  if (!res.ok) {
+  const err = await res.json();
+  alert(err.error || "Failed to save quiz");
+  return;
+}
+
+  if (!isEditing) {
+    saveTeacherQuiz({
+      quizId: data.quizId,
+      title
+    });
+  }
+
+if (isQuizPreview) {
+  alert("Preview finished! No results were saved.");
+  isQuizPreview = false;
+  return;
+}
+
+
+
+  window._teacherEditingQuizId = null;
+  clearTeacherDraft();
+  teacherQuestions = [];
+  window._teacherTitleDraft = "";
+
+  document.getElementById("teacher-result").innerHTML = `
+    <div class="p-4 rounded-xl" style="background:rgba(34,197,94,.1);">
+      ✅ Quiz ${isEditing ? "updated" : "created"} successfully!
+    </div>
+  `;
+
+  renderApp();
+}
+
+
+
+function saveTeacherQuiz(quiz) {
+  const user = getUser();
+  if (!user) return;
+
+  const key = `teacher_quizzes_${user.id}`;
+  const quizzes = JSON.parse(localStorage.getItem(key) || "[]");
+
+  quizzes.unshift({
+    quizId: quiz.quizId,
+    title: quiz.title,
+    createdAt: Date.now()
+  });
+
+  localStorage.setItem(key, JSON.stringify(quizzes));
+}
+
+
+
+function getTeacherQuizzes() {
+  const user = getUser();
+  if (!user) return [];
+
+  const key = `teacher_quizzes_${user.id}`;
+  return JSON.parse(localStorage.getItem(key) || "[]");
+}
+
+function bindTeacherViewEvents() {
+  const backBtn = document.getElementById("backBtnTeacherQuiz");
+  if (backBtn) {
+    backBtn.onclick = () => {
+  window._teacherEditingQuizId = null;
+  clearTeacherDraft();
+  teacherQuestions = [];
+  window._teacherTitleDraft = "";
+  currentView = "home";
+  renderApp();
+};
+  }
+}
+
+async function loadStudentQuiz() {
+
+  // 1️⃣ Require student info
+  if (!currentStudent.name || !currentStudent.id) {
+    openStudentInfoModal();
+    return;
+  }
+
+  // 2️⃣ Get quiz ID FIRST
+  const quizId = document.getElementById("student-quiz-id").value.trim();
+
+  if (!quizId) {
+    alert("Please enter a quiz ID.");
+    return;
+  }
+
+  currentQuizId = quizId;
+
+  // 3️⃣ Fetch quiz
+  const res = await fetch(
+    `https://quiz-backend.espaderario.workers.dev/api/quizzes/${quizId}`
+  );
+
+  if (!res.ok) {
+    document.getElementById("student-error").innerText = "Quiz not found";
+    return;
+  }
+
+  const data = await res.json();
+
+  quizQuestions = data.questions;
+  quizIndex = 0;
+  quizScore = 0;
+  isQuizPreview = false;
+
+  isStudentLocked = true;
+
+  currentView = "teacher-quiz";
+  renderApp();
+}
+
+
+
+
+function renderTeacherQuizView() {
+  if (!quizQuestions || quizQuestions.length === 0) {
+    console.warn("Quiz view opened without questions");
+    currentView = "home";
+    return renderHomeView();
+  }
+
+  const q = quizQuestions[quizIndex];
+  const letters = ["A", "B", "C", "D"];
+
+  return `
+    <div class="w-full h-full p-6">
+      <div class="max-w-xl mx-auto fade-in">
+        <div class="text-sm mb-2" style="color:var(--secondary);">
+          👀 Teacher Quiz • Question ${quizIndex + 1} / ${quizQuestions.length}
+        </div>
+        <h2 class="mb-6" style="font-size:1.4rem;">${q.question}</h2>
+
+        <div class="flex flex-col gap-3">
+          ${q.options.map((opt, j) => `
+            <button
+              onclick="answerTeacherQuiz('${letters[j]}')"
+              class="px-4 py-3 rounded-xl"
+              style="background:var(--card-bg); text-align:left;"
+            >
+              <strong>${letters[j]}.</strong> ${opt}
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function finishStudentQuiz() {
+saveStudentScore({
+  studentName: currentStudent.name,
+  studentId: currentStudent.id,
+  quizId: currentQuizId,
+  score: quizScore,
+  total: quizQuestions.length,
+  date: Date.now()
+});
+
+  currentView = "student-score-history";
+  renderApp();
+  populateStudentScores();
+}
+
+
+function answerTeacherQuiz(selectedLetter) {
+  const q = quizQuestions[quizIndex];
+  if (!q || !q.correct) return; // safety
+
+  const correct = q.correct;
+  const correctIndex = correct.charCodeAt(0) - 65;
+  const correctText = q.options[correctIndex] || "Unknown";
+
+  let feedbackEl = document.createElement("div");
+  feedbackEl.style.marginTop = "12px";
+  feedbackEl.style.fontWeight = "600";
+  feedbackEl.style.color = selectedLetter === correct ? "green" : "red";
+  feedbackEl.innerText = selectedLetter === correct 
+    ? `Correct ✅` 
+    : `Incorrect ❌ • Correct: ${correct} (${correctText})`;
+
+  document.querySelector(".max-w-xl").appendChild(feedbackEl);
+
+  if (selectedLetter === correct) quizScore++;
+
+  setTimeout(() => {
+    quizIndex++;
+    if (quizIndex >= quizQuestions.length) {
+      finishStudentQuiz();
+    } else {
+      renderApp();
+    }
+  }, 1500);
+}
+
+
+function saveStudentScore(record) {
+  const key = "studentQuizScores";
+  const scores = JSON.parse(localStorage.getItem(key) || "[]");
+
+  const student = JSON.parse(sessionStorage.getItem("currentStudent") || "{}");
+
+  if (!student.name || !student.id) {
+    alert("Student information missing!");
+    return;
+  }
+
+  const scoreRecord = {
+    id: crypto.randomUUID(), 
+    ...record,
+    studentName: student.name,
+    studentId: student.id
+  };
+
+  scores.push(scoreRecord);
+  localStorage.setItem(key, JSON.stringify(scores));
+
+  if (currentView === "student-score-history") {
+    populateStudentScores();
+  }
+}
+
+
+function showStudentScores() {
+  currentView = "student-score-history";
+  renderApp();          
+  populateStudentScores(); 
+}
+
+function showStudentScoresByQuiz(quizId) {
+  const allScores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+  const container = document.getElementById("student-score-container");
+  if (!container) return;
+
+  const scores = allScores.filter(
+    s => s.studentId === currentStudent.id && s.quizId === quizId
+  );
+
+  if (!scores.length) {
+    container.innerHTML = `
+      <p style="color:var(--secondary);">
+        No attempts for this quiz yet.
+      </p>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <h3 class="mb-4 text-lg font-semibold">📘 Quiz: ${quizId}</h3>
+
+    <ul class="flex flex-col gap-3">
+      ${scores.map(s => `
+  <li class="p-4 rounded-xl flex justify-between items-start"
+      style="background:var(--card-bg);">
+    <div>
+      <div><strong>Score:</strong> ${s.score} / ${s.total}</div>
+      <div style="color:var(--secondary); font-size:.9rem;">
+        ${new Date(s.date).toLocaleString()}
+      </div>
+    </div>
+
+<button
+  onclick="hideStudentScoreForMe('${s.id}')"
+  class="px-3 py-1 rounded-lg text-sm"
+  style="background:rgba(239,68,68,.15); color:#dc2626;">
+  Delete
+</button>
+  </li>
+`).join("")}
+    </ul>
+
+    <button
+      onclick="populateStudentScores()"
+      class="mt-6 px-4 py-2 rounded-xl"
+      style="background:var(--primary); color:white;">
+      ← Back to All Scores
+    </button>
+  `;
+}
+
+function showTeacherScoresView() {
+  currentView = "teacher-view-scores";
+  renderApp();                  
+  populateTeacherStudentScores();
+}
+
+function populateStudentScores() {
+  const allScores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+  const container = document.getElementById("student-score-container");
+  if (!container) return;
+
+  const student = JSON.parse(sessionStorage.getItem("currentStudent") || "{}");
+  const hiddenScores = JSON.parse(localStorage.getItem(`hiddenScores_${student.id}`) || "[]");
+
+  const studentScores = allScores
+    .filter(s => s.studentId === student.id && !hiddenScores.includes(s.id));
+
+  if (!studentScores.length) {
+    container.innerHTML = `<p style="color:var(--secondary);">You haven't taken any quizzes yet.</p>`;
+    return;
+  }
+
+  const quizzes = {};
+  studentScores.forEach(s => {
+    if (!quizzes[s.quizId]) quizzes[s.quizId] = [];
+    quizzes[s.quizId].push(s);
+  });
+
+  container.innerHTML = `
+    <ul class="flex flex-col gap-4">
+      ${Object.entries(quizzes).map(([quizId, attempts]) => `
+        <li class="p-4 rounded-xl flex justify-between items-center" style="background:var(--card-bg);">
+          <div>
+            <div><strong>Quiz:</strong> ${quizId}</div>
+            <div style="color:var(--secondary); font-size:.9rem;">
+              Attempts: ${attempts.length}
+            </div>
+          </div>
+          <button onclick="showStudentScoresByQuiz('${quizId}')" class="px-4 py-2 rounded-xl" style="background:var(--primary); color:white;">View</button>
+        </li>
+      `).join("")}
+    </ul>
+  `;
+}
+
+
+function populateTeacherStudentScores() {
+  const scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+  const container = document.getElementById("student-score-container");
+  if (!container) return;
+
+  if (!scores.length) {
+    container.innerHTML = `
+      <div class="dashboard-card p-6 text-center" style="color:var(--secondary);">
+        No students have taken any quizzes yet.
+      </div>
+    `;
+    return;
+  }
+
+  const quizzes = {};
+  scores.forEach(s => {
+    if (!quizzes[s.quizId]) quizzes[s.quizId] = [];
+    quizzes[s.quizId].push(s);
+  });
+
+  container.innerHTML = `
+    <div class="dashboard-list">
+      ${Object.entries(quizzes).map(([quizId, attempts]) => `
+        <div class="dashboard-card overflow-hidden">
+          <div class="dashboard-header"
+               onclick="toggleQuizSection('${quizId}')">
+            <div>
+              <strong>📘 ${quizId}</strong>
+              <div style="font-size:.85rem; color:var(--secondary);">
+                ${attempts.length} student${attempts.length !== 1 ? "s" : ""}
+              </div>
+            </div>
+            <span id="icon-${quizId}">▾</span>
+          </div>
+
+          <div id="quiz-${quizId}" class="dashboard-body hidden">
+            <div class="dashboard-list">
+              ${attempts.map(s => `
+  <div class="dashboard-item">
+    <div>
+      <div class="font-medium">
+        ${s.studentName}
+        <span style="opacity:.6;">(${s.studentId})</span>
+      </div>
+      <div style="font-size:.8rem; color:var(--secondary);">
+        ${new Date(s.date).toLocaleString()}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="${
+        s.score / s.total >= 0.7 ? "score-good" : "score-bad"
+      }">
+        ${s.score} / ${s.total}
+      </div>
+
+      <button
+        onclick="deleteStudentScoreById('${s.id}')"
+        class="px-2 py-1 rounded-md text-xs"
+        style="background:rgba(239,68,68,.15); color:#dc2626;">
+        ✕
+      </button>
+    </div>
+  </div>
+`).join("")}
+
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function toggleQuizSection(quizId) {
+  const section = document.getElementById(`quiz-${quizId}`);
+  const icon = document.getElementById(`icon-${quizId}`);
+  if (!section) return;
+
+  const hidden = section.classList.toggle("hidden");
+  icon.textContent = hidden ? "▾" : "▴";
+}
+
+function hideStudentScoreForMe(scoreId) {
+  const student = JSON.parse(sessionStorage.getItem("currentStudent") || "{}");
+  if (!student.id) return;
+
+  const key = `hiddenScores_${student.id}`;
+  const hiddenScores = JSON.parse(localStorage.getItem(key) || "[]");
+
+  if (!hiddenScores.includes(scoreId)) hiddenScores.push(scoreId);
+  localStorage.setItem(key, JSON.stringify(hiddenScores));
+
+  populateStudentScores(); // refresh view
+}
+
+
+function deleteStudentScoreById(scoreId) {
+  if (!confirm("Delete this score?")) return;
+
+  const scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+  const updated = scores.filter(s => s.id !== scoreId);
+
+  localStorage.setItem("studentQuizScores", JSON.stringify(updated));
+
+  if (currentView === "student-score-history") populateStudentScores();
+  if (currentView === "teacher-view-scores") populateTeacherStudentScores();
+}
+
+
+function deleteStudentScore(index) {
+  const scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+  if (index < 0 || index >= scores.length) return;
+  if (!confirm("Delete this score?")) return;
+
+  scores.splice(index, 1);
+  localStorage.setItem("studentQuizScores", JSON.stringify(scores));
+
+  if (currentView === "student-score-history") populateStudentScores();
+  else if (currentView === "teacher-view-scores") populateTeacherStudentScores();
+}
+
+function clearMyStudentScores() {
+  if (!confirm("Delete all your quiz history?")) return;
+
+  const scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+  const filtered = scores.filter(s => s.studentId !== currentStudent.id);
+
+  localStorage.setItem("studentQuizScores", JSON.stringify(filtered));
+  populateStudentScores();
+}
+
+function clearAllStudentScores() {
+  if (!confirm("This will delete ALL student scores. Continue?")) return;
+
+  localStorage.removeItem("studentQuizScores");
+  populateTeacherStudentScores();
+}
+
+
+function showScoresView() {
+  renderApp();
+
+  if (currentView === "student-score-history") {
+    populateStudentScores();
+  }
+
+  if (currentView === "teacher-view-scores") {
+    populateTeacherStudentScores();
+  }
+}
+
+function clearAllStudentScores() {
+  if (!confirm("Are you sure you want to delete all your quiz history?")) return;
+
+  localStorage.removeItem("studentQuizScores");
+  populateStudentScores(); // refresh view
+}
+
+function renderStudentScores() {
+  const scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
+  const container = document.getElementById("student-score-container");
+  if (!container) return;
+
+  if (!scores.length) {
+    container.innerHTML = "<p>No quizzes taken yet.</p>";
+    return;
+  }
+
+  container.innerHTML = `
+    <ul class="flex flex-col gap-2">
+      ${scores.map(s => `
+        <li style="background:var(--card-bg); padding:8px; border-radius:8px;">
+          Quiz: ${s.quizId} • Score: ${s.score}/${s.total} • Date: ${new Date(s.date).toLocaleString()}
+        </li>
+      `).join("")}
+    </ul>
+  `;
+}
+
+
+
+function renderStudentScoreHistoryView() {
+  return `
+    <div class="w-full h-full p-6">
+      <h2 style="font-size:1.5rem; margin-bottom:16px;">📊 Quiz Score History</h2>
+      <div id="student-score-container"></div>
+      <button onclick="clearMyStudentScores()" class="mt-4 px-4 py-2 rounded-xl" style="background:rgba(239,68,68,.15); color:#dc2626;">
+      🗑 Clear My Quiz History
+      </button>
+      <button onclick="currentView='home'; renderApp();" class="mt-6 px-4 py-2 rounded-xl" style="background:var(--primary); color:white;">
+        ← Back to Home
+      </button>
+    </div>
+  `;
+}
+
+
+
+
+function renderTeacherQuizResultView() {
+  if (!teacherQuizData || !teacherQuizData.questions) {
+    console.warn("Teacher quiz result rendered without data");
+    currentView = "home";
+    return renderHomeView();
+  }
+
+  return `
+    <div>Result here</div>
+  `;
+}
+
+function renderTeacherViewScores() {
+  return `
+    <div class="w-full h-full p-6">
+      <h2 style="font-size:1.5rem; margin-bottom:16px;">📊 Student Quiz Scores</h2>
+      <div id="student-score-container"></div>
+      <button onclick="clearAllStudentScores()"
+      class="mt-4 px-4 py-2 rounded-xl"
+      style="background:rgba(239,68,68,.15); color:#dc2626;">
+      🗑 Clear ALL Student Scores
+      </button>
+      <button onclick="currentView='teacher'; renderApp();" 
+        class="mt-6 px-4 py-2 rounded-xl" 
+        style="background:var(--primary); color:white;">
+        ← Back to Dashboard
+      </button>
+    </div>
+  `;
+}
+
+
+
+function exitTeacherQuiz() {
+  quizQuestions = [];
+  quizIndex = 0;
+  quizScore = 0;
+  isQuizPreview = false;
+
+  currentView = "home";
+  renderApp();
+}
+
+
+
+
+
 
 const savedDuration = parseInt(localStorage.getItem("studyTimerDuration"), 10);
 if (!isNaN(savedDuration) && savedDuration > 0) {
@@ -438,36 +1698,65 @@ function getCardsForSet(setId) {
 }
 
 function renderApp() {
-  const app = document.getElementById('app');
+  const app = document.getElementById("app");
+  let content = "";
 
-  let content = '';
-  if (currentView === 'subjects') {
+  if (currentView === "home") {
+    content = renderHomeView();
+  } else if (currentView === "teacher") {
+    content = renderTeacherView();
+  } else if (currentView === "student") {
+    content = renderStudentView();
+  } else if (currentView === "student-score-history") {
+    content = renderStudentScoreHistoryView();
+  } else if (currentView === "teacher-quiz") {
+    content = renderTeacherQuizView();
+  } else if (currentView === "teacher-quiz-result") {
+    content = renderTeacherQuizResultView();
+  } else if (currentView === 'teacher-view-scores') {
+    content = renderTeacherViewScores();
+    setTimeout(() => populateTeacherStudentScores(window._teacherSelectedQuizId), 0);
+  } else if (currentView === "subjects") {
     content = renderSubjectsView();
-  } else if (currentView === 'sets') {
+  } else if (currentView === "sets") {
     content = renderSetsView();
-  } else if (currentView === 'cards') {
+  } else if (currentView === "cards") {
     content = renderCardsView();
-  } else if (currentView === 'study') {
+  } else if (currentView === "study") {
     content = renderStudyView();
-  } else if (currentView === 'quiz') {
+  } else if (currentView === "quiz") {
     content = renderQuizView();
-  } else if (currentView === 'quiz-result') {
+  } else if (currentView === "quiz-result") {
     content = renderQuizResultView();
-  } else if (currentView === 'customize') {
+  } else if (currentView === "customize") {
     content = renderCustomizationPanel();
   }
 
-  
   app.innerHTML = content;
 
-  
+  // Show/hide back buttons
+  const backBtn = document.getElementById("backToHomeBtn");
+  if (backBtn) backBtn.style.display = currentView === "home" ? "none" : "block";
+
+  const backBtnTeacherQuiz = document.getElementById("backBtnTeacherQuiz");
+  if (backBtnTeacherQuiz) {
+    backBtnTeacherQuiz.style.display =
+      ["teacher", "student", "quiz", "quiz-result"].includes(currentView)
+        ? "block"
+        : "none";
+  }
+
+  if (currentView === "teacher") bindTeacherViewEvents();
   attachEventListeners();
 
- 
-  if (currentView === "quiz") {
-    updateTimerUI();
+  if (currentView === "quiz") updateTimerUI();
+
+  
+  if (currentView === "student-score-history") {
+    populateStudentScores();
   }
 }
+
 
 function renderSubjectsView() {
   const subjects = getSubjects();
@@ -514,6 +1803,26 @@ function renderSubjectsView() {
         <div class="subjects-container fade-in">
 
           <div class="subjects-hero">
+          <button
+  id="backToHomeBtn"
+  style="
+    display:none;
+    position:fixed;
+    top:16px;
+    left:16px;
+    z-index:999;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(0,0,0,.08);
+    color:var(--text);
+    font-weight:600;
+    border:none;
+    cursor:pointer;
+  "
+>
+  ← Home
+</button>
+
             <h1 class="subjects-title">
               ${config.app_title || defaultConfig.app_title}
             </h1>
@@ -1145,10 +2454,11 @@ color:${text};margin-bottom:24px;">
   `;
 }
 
-function exitQuiz() {
+
+function exitQuizBtn() {
   stopStudyTimer();
   resetStudyTimer();
-  currentView = "cards";
+  currentView = "home";
   renderApp();
 }
 
@@ -1666,6 +2976,33 @@ function showToast(message) {
 }
 
 function attachEventListeners() {
+  const openFlashcardsBtn = document.getElementById("openFlashcardsBtn");
+if (openFlashcardsBtn) {
+  openFlashcardsBtn.addEventListener("click", () => {
+    currentView = "subjects";
+    renderApp();
+  });
+}
+
+const backBtn = document.getElementById("backToHomeBtn");
+
+if (backBtn) {
+ backBtn.addEventListener("click", () => {
+  currentSet = null;
+  currentCardIndex = 0;
+  studyQueue = [];
+  currentView = "home";
+  renderApp();
+});
+}
+  const backBtnteacherquiz = document.getElementById("backBtnTeacherQuiz");
+  if (backBtnteacherquiz) {
+    backBtnteacherquiz.onclick = () => {
+      currentView = "home";
+      renderApp();
+    };
+  }
+
   const addSubjectBtn = document.getElementById('addSubjectBtn');
   if (addSubjectBtn) {
     addSubjectBtn.addEventListener('click', showAddSubjectModal);
