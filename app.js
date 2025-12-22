@@ -844,67 +844,68 @@ function addTeacherQuestion() {
   renderApp();
 }
 
-
 async function submitTeacherQuiz() {
-const title = document.getElementById("quiz-title").value.trim();
+  const title = document.getElementById("quiz-title").value.trim();
 
-if (!title || teacherQuestions.length === 0) {
-  alert("Please add a title and at least one question.");
-  return;
-}
-
-const isEditing = !!window._teacherEditingQuizId;
-
-const url = isEditing
-  ? `https://quiz-backend.espaderario.workers.dev/api/quizzes/${window._teacherEditingQuizId}`
-  : "https://quiz-backend.espaderario.workers.dev/api/quizzes";
-
-const method = isEditing ? "PUT" : "POST";
-
-const res = await fetch(url, {
-  method,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    title,
-    questions: teacherQuestions,
-  })
-});
-
-  const data = await res.json();
-
-  if (!res.ok) {
-  const err = await res.json();
-  alert(err.error || "Failed to save quiz");
-  return;
-}
-
-  if (!isEditing) {
-    saveTeacherQuiz({
-      quizId: data.quizId,
-      title
-    });
+  if (!title || teacherQuestions.length === 0) {
+    alert("Please add a title and at least one question.");
+    return;
   }
 
-if (isQuizPreview) {
-  alert("Preview finished! No results were saved.");
-  isQuizPreview = false;
-  return;
-}
+  const isEditing = !!window._teacherEditingQuizId;
 
+  const url = isEditing
+    ? `https://quiz-backend.espaderario.workers.dev/api/quizzes/${window._teacherEditingQuizId}`
+    : "https://quiz-backend.espaderario.workers.dev/api/quizzes";
 
+  const method = isEditing ? "PUT" : "POST";
 
-  window._teacherEditingQuizId = null;
-  clearTeacherDraft();
-  teacherQuestions = [];
-  window._teacherTitleDraft = "";
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        questions: teacherQuestions,
+      }),
+    });
 
-  document.getElementById("teacher-result").innerHTML = `
-    <div class="p-4 rounded-xl" style="background:rgba(34,197,94,.1);">
-      ✅ Quiz ${isEditing ? "updated" : "created"} successfully!
-    </div>
-  `;
+    const data = await res.json(); // read once
 
-  renderApp();
+    if (!res.ok) {
+      alert(data.error || "Failed to save quiz");
+      return;
+    }
+
+    if (!isEditing) {
+      saveTeacherQuiz({
+        quizId: data.quizId,
+        title,
+      });
+    }
+
+    if (isQuizPreview) {
+      alert("Preview finished! No results were saved.");
+      isQuizPreview = false;
+      return;
+    }
+
+    window._teacherEditingQuizId = null;
+    clearTeacherDraft();
+    teacherQuestions = [];
+    window._teacherTitleDraft = "";
+
+    document.getElementById("teacher-result").innerHTML = `
+      <div class="p-4 rounded-xl" style="background:rgba(34,197,94,.1);">
+        ✅ Quiz ${isEditing ? "updated" : "created"} successfully!
+      </div>
+    `;
+
+    renderApp();
+  } catch (err) {
+    console.error("Error submitting quiz:", err);
+    alert("An unexpected error occurred while saving the quiz.");
+  }
 }
 
 
@@ -3397,6 +3398,5 @@ if ("serviceWorker" in navigator) {
       .catch(err => console.error("SW registration failed", err));
   });
 }
-
 
 
