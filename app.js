@@ -91,7 +91,8 @@ const DEFAULT_SETTINGS = {
     radius: 16,
     cardSize: "normal",
     animation: "flip"
-  }
+  },
+  layoutMode: "auto"
 };
 
 const THEME_PRESETS = {
@@ -227,15 +228,16 @@ const THEME_PRESETS = {
       text: "#134e4a"
     }
   },
+
 kpop_blackpink: {
-  colors: { 
-    primary: "#ff4d6d", 
-    background: "#ffe3ec",   
-    card: "#ffe3ec", 
-    text: "#1a1a1a" 
+  colors: {
+    primary: "#ff4d6d",
+    background: "#ffe3ec",
+    card: "#ffe3ec",
+    text: "#1a1a1a"
   },
-  backgroundImage: "url('images/blackpink.svg')", 
-  font: { family: "Google Sans" }
+  font: { family: "Google Sans" },
+  backgroundImage: "url('images/blackpink.svg')"
 },
 
 kpop_bts: {
@@ -755,55 +757,15 @@ function createThemeButton(themeName) {
   `;
 }
 
-
 function applyThemePreset(name) {
   const theme = THEME_PRESETS[name];
   if (!theme) return;
 
-  window.currentTheme = name;                   // <— required
-  localStorage.setItem("flashcard-theme", name);// <— required
+  userSettings.colors = theme.colors || userSettings.colors;
+  userSettings.font = theme.font || userSettings.font;
+  userSettings.backgroundImage = theme.backgroundImage || null;
 
-  document.documentElement.style.setProperty("--primary", theme.colors.primary);
-  document.documentElement.style.setProperty("--card-bg", theme.colors.card);
-  document.documentElement.style.setProperty("--text", theme.colors.text);
-
-  if (theme.backgroundImage) {
-    document.body.style.backgroundImage = theme.backgroundImage;
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundRepeat = "no-repeat";
-    document.body.style.backgroundPosition = "center";
-    document.body.style.backgroundAttachment = "fixed";
-  } else {
-    document.body.style.backgroundImage = "none";
-    document.body.style.backgroundColor = theme.colors.background || "#fff";
-  }
-
-  renderApp();
-}
-
-
-
-function applyTheme(theme) {
-  const themes = {
-    forest: {
-      primary_color: "#2f855a",
-      card_background: "#f0fff4",
-      text_color: "#1a202c"
-    },
-    sea: {
-      primary_color: "#3182ce",
-      card_background: "#ebf8ff",
-      text_color: "#1a202c"
-    },
-    blackpink: {
-      primary_color: "#ff4d6d",
-      card_background: "#fff0f3",
-      text_color: "#1a202c"
-    }
-  };
-
-  Object.assign(config, themes[theme]);
-  localStorage.setItem("qzers-theme", JSON.stringify(config));
+  applyUserSettings();
   renderApp();
 }
 
@@ -1177,7 +1139,7 @@ function backStudentBtn() {
 
 function renderTeacherView() {
   return `
-    <div  class="flex flex-col items-center mt-6 space-y-6 w-full">
+    <div  class="flex flex-col items-center mt-6 space-y-6 w-full" style="background-image: var(--background-image); background-size: cover; background-position: center;">
 
       <!-- Teacher Tabs -->
       <div class="flex gap-2">
@@ -2328,14 +2290,28 @@ function applyUserSettings() {
   r.setProperty("--font-family", s.font.family);
   r.setProperty("--font-size", `${s.font.size}px`);
   r.setProperty("--line-height", s.font.lineHeight);
-
   r.setProperty("--radius", `${s.layout.radius}px`);
+
+if (s.backgroundImage) {
+  document.documentElement.style.setProperty("--background-image", s.backgroundImage);
+  document.body.style.backgroundImage = s.backgroundImage;
+  document.body.style.backgroundColor = "transparent";
+} else {
+  document.documentElement.style.setProperty("--background-image", "none");
+  document.body.style.backgroundImage = "none";
+  document.body.style.backgroundColor = s.colors.background;
+
+  document.body.style.removeProperty("background-image");
+  document.documentElement.style.removeProperty("--background-image");
+}
 
   document.documentElement.dataset.cardSize = s.layout.cardSize;
   document.documentElement.dataset.anim = s.layout.animation;
 
   localStorage.setItem("userSettings", JSON.stringify(s));
+  
 }
+
 
 let userSettings = loadSettings();
 applyUserSettings();
@@ -2364,6 +2340,15 @@ function renderCustomizationPanel() {
       <h2>🎨 Customize Interface</h2>
       <button id="closeSettingsBtn">✕</button>
     </div>
+
+<div class="settings-group">
+  <label class="setting-label">View Mode</label>
+  <select onchange="setLayoutMode(this.value)">
+    <option value="auto">Auto (Based on screen size)</option>
+    <option value="mobile">Mobile View</option>
+    <option value="desktop">Desktop View</option>
+  </select>
+</div>
 
     <!-- PRIMARY COLOR -->
     <div class="settings-group">
@@ -2435,6 +2420,12 @@ function renderCustomizationPanel() {
 function resetSettings() {
   userSettings = structuredClone(DEFAULT_SETTINGS);
   saveAndApplySettings();
+}
+
+function setLayoutMode(mode) {
+  userSettings.layoutMode = mode;
+  applyUserSettings();
+  renderApp();
 }
 
 

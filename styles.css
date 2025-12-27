@@ -8,15 +8,7 @@
   --font-size: 14px;
   --radius: 16px;
   --font-family: Inter, system-ui, sans-serif;
-}
-#app {
-  background-image: var(--backgroundImage);
-  background-size: cover;
-  background-position: center;
-}
-
-body {
-  transition: background 0.4s ease-in-out;
+  --background-image: none;
 }
 
 .card-study, .browse-card, .theme-section {
@@ -28,14 +20,31 @@ body {
 body {
   font-family: var(--font-family);
   font-size: var(--font-size);
-  background: var(--background);
-  color: var(--text);
-  background-image: var(--backgroundImage);
+  background-color: var(--background) !important;
+  background-image: var(--background-image) !important;
   background-size: cover;
+  background-repeat: no-repeat;
   background-position: center;
+  background-attachment: fixed;
+  transition: background .3s ease;
+  color: var(--text);
   margin: 0;
-  box-sizing: border-box;
+  box-sizing: border-box; 
 }
+
+body.desktop-view {
+  --font-size: 20px;
+  --card-size: large;
+  max-width: 1200px;
+  margin: auto;
+}
+
+body.mobile-view {
+  --font-size: 16px;
+  --card-size: medium;
+  width: 100%;
+}
+
 h1 { font-size: calc(var(--font-size) * 2.2); }
 h2 { font-size: calc(var(--font-size) * 1.8); }
 h3 { font-size: calc(var(--font-size) * 1.4); }
