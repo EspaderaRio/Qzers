@@ -1,6 +1,9 @@
 window.currentStudent =
   JSON.parse(localStorage.getItem("currentStudent") || "null");
 
+  window.currentTheme = localStorage.getItem("flashcard-theme") || null;
+if (window.currentTheme) applyThemePreset(window.currentTheme);
+
 
 (function cleanupNullQuizScores() {
   let scores = JSON.parse(localStorage.getItem("studentQuizScores") || "[]");
@@ -92,7 +95,7 @@ const DEFAULT_SETTINGS = {
 };
 
 const THEME_PRESETS = {
-  /* ===== EXISTING ===== */
+
   light: {
     colors: {
       primary: "#2563eb",
@@ -140,8 +143,6 @@ const THEME_PRESETS = {
       family: "Playfair Display"
     }
   },
-
-  /* ===== NEW THEMES ===== */
 
   midnight: {
     colors: {
@@ -225,11 +226,105 @@ const THEME_PRESETS = {
       card: "#cffafe",
       text: "#134e4a"
     }
-  }
+  },
+kpop_blackpink: {
+  colors: { 
+    primary: "#ff4d6d", 
+    background: "#ffe3ec",   
+    card: "#ffe3ec", 
+    text: "#1a1a1a" 
+  },
+  backgroundImage: "url('images/blackpink.svg')", 
+  font: { family: "Google Sans" }
+},
+
+kpop_bts: {
+  colors: { primary: "#6a5acd", background: "#f3f0ff", card: "#e6e1ff", text: "#111" },
+  font: { family: "Poppins" },
+  backgroundImage: "url('https://i.imgur.com/da5Z6Y1.jpg')"
+},
+
+kpop_twice: {
+  colors: { primary: "#ff6ec7", background: "#fff5fa", card: "#ffe0f2", text: "#111" }
+},
+kpop_seventeen: {
+  colors: { primary: "#9d8df1", background: "#f6f3ff", card: "#e8e0ff", text: "#111" }
+},
+kpop_straykids: {
+  colors: { primary: "#bd2222", background: "#fff5f5", card: "#ffe0e0", text: "#111" }
+},
+kpop_exo: {
+  colors: { primary: "#111", background: "#e5e7eb", card: "#fff", text: "#000" }
+},
+kpop_redvelvet: {
+  colors: { primary: "#e63946", background: "#fff4f4", card: "#ffe1e1", text: "#111" }
+},
+kpop_itzy: {
+  colors: { primary: "#ff0099", background: "#fce7f7", card: "#ffdaf5", text: "#111" }
+},
+kpop_newjeans: {
+  colors: { primary: "#4ea8ff", background: "#e7f3ff", card: "#d0e8ff", text: "#111" }
+}
+
 };
 
+const BUILT_IN_SETS = {
+  math: {
+    subject: {
+      name: "Math",
+      icon: "➗"
+    },
+    set: {
+      name: "Basic Math"
+    },
+    cards: [
+      { question: "2 + 2", answer: "4" },
+      { question: "5 × 3", answer: "15" },
+      { question: "10 ÷ 2", answer: "5" }
+    ]
+  },
 
+  science: {
+    subject: {
+      name: "Science",
+      icon: "🔬"
+    },
+    set: {
+      name: "Basic Science"
+    },
+    cards: [
+      { question: "What planet is closest to the Sun?", answer: "Mercury" },
+      { question: "H2O is?", answer: "Water" }
+    ]
+  },
 
+  english: {
+    subject: {
+      name: "English",
+      icon: "📖"
+    },
+    set: {
+      name: "Basic English"
+    },
+    cards: [
+      { question: "Synonym of fast?", answer: "Quick" },
+      { question: "Opposite of hot?", answer: "Cold" }
+    ]
+  },
+  biology: {
+    subject: {
+      name: "Biology",
+      icon: "🧬"
+    },
+    set: {
+      name: "Basic Biology"
+    },
+    cards: [
+      { question: "What is the powerhouse of the cell?", answer: "Mitochondria" },
+      { question: "What is the largest organ in the human body?", answer: "Skin" }
+    ]
+  }
+};
 
 let config = { ...defaultConfig };
 let allData = [];
@@ -258,6 +353,11 @@ let teacherTab = "main";
 let pendingQuizId = null;
 let timerHidden = false;
 let showTimerControls = true;
+let activeBottomTab = "home"; 
+let currentBrowseSetId = null;
+let currentBrowseSetCards = [];
+let currentBrowseCardIndex = 0;
+let isBrowseCardFlipped = false;
 let currentStudent = {
   name: "",
   id: ""
@@ -269,6 +369,443 @@ let studyTimer = {
   running: false,
   startTime: null
 };
+
+
+
+function renderBottomNav() {
+  const primary = config.primary_color;
+  const bg = config.card_background;
+  const text = config.text_color;
+
+  const tabStyle = (tab) => `
+    flex:1;
+    text-align:center;
+    padding:10px 0;
+    font-size:12px;
+    color:${activeBottomTab === tab ? primary : text};
+    font-weight:${activeBottomTab === tab ? "600" : "400"};
+  `;
+
+  return `
+    <div
+      style="
+        position:fixed;
+        margin-bottom:5px;
+        bottom:0;
+        left:0;
+        right:0;
+        height:50px;
+        background:${bg};
+        box-shadow:0 -6px 20px rgba(0,0,0,.12);
+        display:flex;
+        z-index:2000;
+      "
+    >
+      <button style="${tabStyle("browse")}" onclick="goToBrowse()">
+        📚<br/>Browse
+      </button>
+
+      <button style="${tabStyle("home")}" onclick="goToHome()">
+        🏠<br/>Home
+      </button>
+
+      <button style="${tabStyle("themes")}" onclick="goToThemes()">
+        🎨<br/>Themes
+      </button>
+    </div>
+  `;
+}
+
+function goToHome() {
+  activeBottomTab = "home";
+  currentView = "home";
+  renderApp();
+}
+
+function goToBrowse() {
+  activeBottomTab = "browse";
+  currentView = "browse"; 
+  renderApp();
+}
+
+function goToThemes() {
+  activeBottomTab = "themes";
+  currentView = "themes"; 
+  renderApp();
+}
+
+function renderBrowseView() {
+  const builtInSets = [
+    { id: 'math', name: 'Math', icon: '➗', gradient: 'from-blue-400 to-blue-600', count: 12 },
+    { id: 'science', name: 'Science', icon: '🔬', gradient: 'from-green-400 to-green-600', count: 10 },
+    { id: 'english', name: 'English', icon: '📖', gradient: 'from-purple-400 to-purple-600', count: 8 },
+    { id: 'biology', name: 'Biology', icon: '🧬', gradient: 'from-blue-600 to-green-600', count: 8 }
+  ];
+
+  const setsHTML = builtInSets.map(set => `
+    <div 
+      class="browse-card flex flex-col items-center justify-center p-5 rounded-2xl shadow-lg cursor-pointer text-white transition transform hover:scale-105 active:scale-95 bg-gradient-to-br ${set.gradient}" 
+      onclick="openBrowseSet('${set.id}')"
+    >
+      <div class="text-3xl mb-2">${set.icon}</div>
+      <h3 class="font-semibold text-lg">${set.name}</h3>
+      <p class="text-sm opacity-80 mt-1">${set.count} card${set.count !== 1 ? 's' : ''}</p>
+    </div>
+  `).join('');
+
+  return `
+    <div class="p-5 fade-in max-w-md mx-auto">
+      <h2 class="text-xl font-semibold mb-6 text-center" style="color: var(--text);">
+        📚 Browse Flashcards
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        ${setsHTML}
+      </div>
+    </div>
+  `;
+}
+
+function openBrowseSet(id) {
+  currentBrowseSetId = id;
+  currentView = "browse-cards";
+  renderApp();
+}
+
+function renderBrowseCardsView() {
+  if (!currentBrowseSetId) return renderBrowseView();
+
+  const data = BUILT_IN_SETS[currentBrowseSetId];
+  if (!data) return renderBrowseView();
+
+  const cardsHTML = data.cards.map((card, i) => `
+    <div class="card-preview p-4 rounded-xl mb-3"
+         style="background:var(--card-bg); box-shadow:0 2px 8px rgba(0,0,0,.08);">
+      <strong>Q${i + 1}:</strong> ${card.question}<br/>
+      <span style="opacity:.7">${card.answer}</span>
+    </div>
+  `).join('');
+
+  return `
+    <div class="fade-in p-4 max-w-md mx-auto">
+      <button
+        class="mb-4 px-4 py-2 rounded-lg"
+        style="background:var(--card-bg)"
+        onclick="goBackToBrowse()"
+      >
+        ← Back
+      </button>
+
+      <h2 class="text-lg font-semibold mb-4">${data.set.name}</h2>
+
+      <div class="flex gap-3 mb-4">
+        <button
+          class="flex-1 py-3 rounded-xl text-white"
+          style="background:var(--primary)"
+          onclick="startBrowseStudy('${currentBrowseSetId}')"
+        >
+          Study
+        </button>
+        <button
+          class="flex-1 py-3 rounded-xl text-white"
+          style="background:var(--secondary)"
+          onclick="startBrowseQuiz('${currentBrowseSetId}')"
+        >
+          Quiz
+        </button>
+      </div>
+
+      ${cardsHTML}
+    </div>
+  `;
+}
+
+function startBrowseStudy(setId) {
+  const data = BUILT_IN_SETS[setId];
+  if (!data) return;
+
+  currentBrowseSetCards = data.cards;
+  currentBrowseCardIndex = 0;
+  isBrowseCardFlipped = false;
+  currentView = "browse-study";
+  renderApp();
+}
+
+// ---------- Render Browse Study as Flashcards ----------
+function renderBrowseStudyView() {
+  const card = currentBrowseSetCards[currentBrowseCardIndex];
+  if (!card) {
+    currentView = "browse-cards";
+    return renderBrowseCardsView();
+  }
+
+  return `
+    <div class="p-4 max-w-md mx-auto fade-in">
+      <button class="mb-4 px-4 py-2 rounded-lg" 
+              style="background:var(--card-bg); cursor:pointer;" 
+              onclick="backToBrowseCards()">
+        ← Back
+      </button>
+
+      <div class="card-study p-6 rounded-xl text-center" 
+           style="background:var(--card-bg); perspective:1000px;">
+
+        <div class="card-inner ${isBrowseCardFlipped ? 'flipped' : ''}" 
+     onclick="flipBrowseCard()" 
+     style="
+       transition: transform 0.6s cubic-bezier(.175,.885,.32,1.275), scale 0.3s ease;
+       transform-style: preserve-3d;
+       cursor: pointer;
+       position: relative;
+       width: 100%;
+       min-height: 150px;
+       border-radius: 1rem;
+       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+     ">
+
+  <div class="card-front" style="
+       backface-visibility: hidden;
+       position: absolute; top: 0; left: 0;
+       width: 100%; height: 100%;
+       display: flex; justify-content: center; align-items: center;
+       padding: 1rem;
+       border-radius: 1rem;
+       background: var(--card-bg);
+     ">
+    <h3 class="font-semibold text-lg mb-2">Q: ${card.question}</h3>
+  </div>
+
+
+          <div class="card-back" style="
+               backface-visibility: hidden;
+               transform: rotateY(180deg);
+               position: absolute; top: 0; left: 0;
+               width: 100%; height: 100%;
+               display: flex; justify-content: center; align-items: center;
+               padding: 1rem;
+               border-radius: 1rem;
+               background: var(--card-bg);
+               box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+             ">
+            <p class="opacity-80">A: ${card.answer}</p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="flex justify-between mt-4">
+        <button onclick="prevBrowseCard()" 
+                class="px-4 py-2 rounded-lg" 
+                style="background:var(--card-bg); cursor:pointer;">← Prev</button>
+        <button onclick="nextBrowseCard()" 
+                class="px-4 py-2 rounded-lg" 
+                style="background:var(--card-bg); cursor:pointer;">Next →</button>
+      </div>
+      <style>
+  .card-inner {
+    transform: rotateY(0deg);
+  }
+
+  .card-inner.flipped {
+    transform: rotateY(180deg) scale(1.03); /* Slight pop when flipped */
+    box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+  }
+
+  /* Smooth fade for backside as it flips */
+  .card-back {
+    opacity: 0;
+    transition: opacity 0.3s ease 0.25s;
+  }
+
+  .card-inner.flipped .card-back {
+    opacity: 1;
+  }
+</style>
+
+    </div>
+  `;
+}
+
+// ---------- Flip Card ----------
+function flipBrowseCard() {
+  isBrowseCardFlipped = !isBrowseCardFlipped;
+  renderApp();
+}
+
+// ---------- Navigation ----------
+function prevBrowseCard() {
+  if (currentBrowseCardIndex > 0) currentBrowseCardIndex--;
+  isBrowseCardFlipped = false; // reset flip
+  renderApp();
+}
+
+function nextBrowseCard() {
+  if (currentBrowseCardIndex < currentBrowseSetCards.length - 1) currentBrowseCardIndex++;
+  isBrowseCardFlipped = false; // reset flip
+  renderApp();
+}
+
+function startBrowseQuiz(setId) {
+  const data = BUILT_IN_SETS[setId];
+  if (!data) return;
+
+  currentBrowseQuizCards = data.cards;
+  currentBrowseQuizIndex = 0;
+  currentBrowseQuizScore = 0;
+  currentView = "browse-quiz";
+  renderApp();
+}
+
+function renderBrowseQuizView() {
+  const card = currentBrowseQuizCards[currentBrowseQuizIndex];
+  if (!card) {
+    return `
+      <div class="p-4 max-w-md mx-auto fade-in text-center">
+        <h2 class="text-xl font-semibold mb-4">Quiz Complete!</h2>
+        <p class="mb-4">Score: ${currentBrowseQuizScore} / ${currentBrowseQuizCards.length}</p>
+        <button class="px-4 py-2 rounded-lg" style="background:var(--primary); color:white;" onclick="backToBrowseCards()">
+          Back to Set
+        </button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="p-4 max-w-md mx-auto fade-in">
+      <h3 class="font-semibold text-lg mb-2">Q${currentBrowseQuizIndex + 1}: ${card.question}</h3>
+
+      <button class="w-full py-3 mt-3 rounded-xl text-white" style="background:var(--primary)" onclick="answerBrowseQuiz(true)">
+        Show Answer
+      </button>
+    </div>
+  `;
+}
+
+function answerBrowseQuiz(showAnswer) {
+  if (showAnswer) currentBrowseQuizScore++;
+  currentBrowseQuizIndex++;
+  renderApp();
+}
+
+function backToBrowseCards() {
+  currentView = "browse-cards";
+  renderApp();
+}
+
+function goBackToBrowse() {
+  currentBrowseSetId = null;
+  currentView = "browse";
+  renderApp();
+}
+
+function renderThemesView() {
+  const categories = {
+    "Nature": ["forest", "mint", "lavender", "coffee"],
+    "K-pop": [
+  "kpop_blackpink", 
+  "kpop_bts", 
+  "kpop_twice",
+  "kpop_seventeen",
+  "kpop_straykids",
+  "kpop_exo",
+  "kpop_redvelvet",
+  "kpop_itzy",
+  "kpop_newjeans"
+],
+    "Dark Aesthetic": ["midnight", "graphite", "cyber"],
+    "Light & Minimal": ["light", "paper", "sunset", "rose"],
+    "Animals": ["sea", "lake"], // add themes later
+  };
+
+  const themeSection = Object.keys(categories).map(category => `
+    <div class="theme-section mb-5">
+      <h3 class="text-lg font-semibold mb-2">${category}</h3>
+      <div class="grid grid-cols-2 gap-2">
+        ${categories[category].map(t => createThemeButton(t)).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="p-5 fade-in max-w-md mx-auto">
+      <h2 class="text-xl font-bold mb-4 text-center">🎨 Themes</h2>
+      <p class="text-sm opacity-70 text-center mb-4">Choose a theme category below</p>
+      ${themeSection}
+    </div>
+  `;
+}
+
+function createThemeButton(themeName) {
+  const preset = THEME_PRESETS[themeName];
+  if (!preset) return ""; 
+
+  return `
+    <button 
+      style="
+        padding:10px;
+        border-radius:10px;
+        font-weight:600;
+        background:${preset.colors.primary};
+        color:#fff;
+        transition:.2s;
+      "
+      onclick="applyThemePreset('${themeName}')"
+    >
+      ${themeName.charAt(0).toUpperCase() + themeName.slice(1)}
+    </button>
+  `;
+}
+
+
+function applyThemePreset(name) {
+  const theme = THEME_PRESETS[name];
+  if (!theme) return;
+
+  window.currentTheme = name;                   // <— required
+  localStorage.setItem("flashcard-theme", name);// <— required
+
+  document.documentElement.style.setProperty("--primary", theme.colors.primary);
+  document.documentElement.style.setProperty("--card-bg", theme.colors.card);
+  document.documentElement.style.setProperty("--text", theme.colors.text);
+
+  if (theme.backgroundImage) {
+    document.body.style.backgroundImage = theme.backgroundImage;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundRepeat = "no-repeat";
+    document.body.style.backgroundPosition = "center";
+    document.body.style.backgroundAttachment = "fixed";
+  } else {
+    document.body.style.backgroundImage = "none";
+    document.body.style.backgroundColor = theme.colors.background || "#fff";
+  }
+
+  renderApp();
+}
+
+
+
+function applyTheme(theme) {
+  const themes = {
+    forest: {
+      primary_color: "#2f855a",
+      card_background: "#f0fff4",
+      text_color: "#1a202c"
+    },
+    sea: {
+      primary_color: "#3182ce",
+      card_background: "#ebf8ff",
+      text_color: "#1a202c"
+    },
+    blackpink: {
+      primary_color: "#ff4d6d",
+      card_background: "#fff0f3",
+      text_color: "#1a202c"
+    }
+  };
+
+  Object.assign(config, themes[theme]);
+  localStorage.setItem("qzers-theme", JSON.stringify(config));
+  renderApp();
+}
 
 function renderHomeView() {
   return `
@@ -297,18 +834,19 @@ function renderHomeView() {
         <div class="flex flex-col gap-4">
 
           <!-- Flashcards -->
-          <button
-            id="openFlashcardsBtn"
-            class="w-full py-4 rounded-xl font-semibold"
-            style="
-              background:var(--primary);
-              color:white;
-              box-shadow:0 10px 30px rgba(37,99,235,.35);
-              font-size:calc(var(--font-size) * 1.1);
-            "
-          >
-            🃏 Flashcards
-          </button>
+<button
+  type="button"
+  onclick="openFlashcards()"
+  class="w-full py-4 rounded-xl font-semibold"
+  style="
+    background:var(--primary);
+    color:white;
+    box-shadow:0 10px 30px rgba(37,99,235,.35);
+    font-size:calc(var(--font-size) * 1.1);
+  "
+>
+  🃏 Flashcards
+</button>
 
           <!-- Teacher Quiz -->
           <button
@@ -341,6 +879,12 @@ function renderHomeView() {
       </div>
     </div>
   `;
+}
+
+function openFlashcards() {
+  activeBottomTab = "subjects"; // sync bottom nav
+  currentView = "subjects";
+  renderApp();
 }
 
 function openTeacherQuiz() {
@@ -808,10 +1352,12 @@ function renderTeacherQuizList() {
   return `
     <div class="w-full h-full overflow-auto p-6" style="background: var(--background); font-family: var(--font-family); font-size: var(--font-size); line-height: var(--line-height);">
       <div class="max-w-2xl mx-auto fade-in">
-        <button id="backBtnTeacherQuiz"
-                style="display:none; position:fixed; top:60px; left:16px; z-index:1000; padding:8px 14px; border-radius:999px; background: var(--card-bg); font-weight:600; cursor:pointer; border:1px solid var(--primary);">
-          ← Back
-        </button>
+        <button
+  id="backBtnTeacher"
+  class="px-4 py-2 rounded-lg mb-4"
+>
+  ← Back
+</button>
 
         <h3 style="font-size:calc(var(--font-size) * 1.2); margin-bottom:12px; color: var(--text);">📋 Your Quizzes</h3>
         ${quizListHTML}
@@ -1175,16 +1721,19 @@ function getTeacherQuizzes() {
 }
 
 function bindTeacherViewEvents() {
-  const backBtn = document.getElementById("backBtnTeacherQuiz");
+  const backBtn = document.getElementById("backBtnTeacher");
   if (backBtn) {
     backBtn.onclick = () => {
-  window._teacherEditingQuizId = null;
-  clearTeacherDraft();
-  teacherQuestions = [];
-  window._teacherTitleDraft = "";
-  currentView = "home";
-  renderApp();
-};
+      currentView = "home";
+      renderApp();
+    };
+  }
+  const backTeacherBtn = document.getElementById("backBtnScoresTeacher");
+  if (backTeacherBtn) {
+    backTeacherBtn.onclick = () => {
+      currentView = "teacher-quiz-list";
+      renderApp();
+    };
   }
 }
 
@@ -1285,7 +1834,9 @@ function renderTeacherQuizView() {
         <div class="text-sm mb-2" style="color:var(--secondary);">
           👀 Teacher Quiz • Question ${quizIndex + 1} / ${quizQuestions.length}
         </div>
-        <h2 class="mb-6" style="font-size:1.4rem;">${q.question}</h2>
+        <h2 class="mb-6" style="calc(var(--font-size) * 2); font-weight:600; color:var(--text);">
+          Q${quizIndex + 1}: ${q.question}
+        </h2>
 
         <div class="flex flex-col gap-3">
           ${q.options.map((opt, j) => `
@@ -1725,17 +2276,17 @@ function renderTeacherQuizResultView() {
 function renderTeacherViewScores() {
   return `
     <div class="w-full h-full p-6">
+      <button onclick="currentView='teacher'; renderApp();" 
+        class="mt-6 px-4 py-2 rounded-xl" 
+        style="background:var(--primary); color:white;">
+        ← Back to Dashboard
+      </button>  m
       <h2 style="font-size:1.5rem; margin-bottom:16px;">📊 Student Quiz Scores</h2>
       <div id="student-score-container"></div>
       <button onclick="clearAllStudentScores()"
       class="mt-4 px-4 py-2 rounded-xl"
       style="background:rgba(239,68,68,.15); color:#dc2626;">
       🗑 Clear ALL Student Scores
-      </button>
-      <button onclick="currentView='teacher'; renderApp();" 
-        class="mt-6 px-4 py-2 rounded-xl" 
-        style="background:var(--primary); color:white;">
-        ← Back to Dashboard
       </button>
     </div>
   `;
@@ -1812,18 +2363,6 @@ function renderCustomizationPanel() {
     <div class="settings-header">
       <h2>🎨 Customize Interface</h2>
       <button id="closeSettingsBtn">✕</button>
-    </div>
-
-    <!-- THEME PRESETS -->
-    <div class="theme-grid">
-      ${Object.keys(THEME_PRESETS).map(key => `
-        <button
-          class="theme-tile ${userSettings.theme === key ? "active" : ""}"
-          onclick="applyThemePreset('${key}')"
-        >
-          ${key}
-        </button>
-      `).join("")}
     </div>
 
     <!-- PRIMARY COLOR -->
@@ -2009,17 +2548,29 @@ function renderApp() {
 
   if (currentView === "home") {
     content = renderHomeView();
+  } else if (currentView === "browse") {
+    content = renderBrowseView();
+  } else if (currentView === "browse-study") {
+    content = renderBrowseStudyView();
+  } else if (currentView === "browse-quiz") {
+    content = renderBrowseQuizView();
+  } else if (currentView === "browse-cards") {
+    content = renderBrowseCardsView();
+  } else if (currentView === "themes") {
+    content = renderThemesView();
   } else if (currentView === "teacher") {
     content = renderTeacherView();
   } else if (currentView === "student") {
     content = renderStudentView();
   } else if (currentView === "student-score-history") {
     content = renderStudentScoreHistoryView();
+  } else if ( currentView === "teacher-quiz-list") {
+    content = renderTeacherQuizListView();
   } else if (currentView === "teacher-quiz") {
     content = renderTeacherQuizView();
   } else if (currentView === "teacher-quiz-result") {
     content = renderTeacherQuizResultView();
-  } else if (currentView === 'teacher-view-scores') {
+  } else if (currentView === "teacher-view-scores") {
     content = renderTeacherViewScores();
     setTimeout(() => populateTeacherStudentScores(window._teacherSelectedQuizId), 0);
   } else if (currentView === "subjects") {
@@ -2040,27 +2591,43 @@ function renderApp() {
 
   app.innerHTML = content;
 
-  // Show/hide back buttons
-  const backBtn = document.getElementById("backToHomeBtn");
-  if (backBtn) backBtn.style.display = currentView === "home" ? "none" : "block";
-
-  const backBtnTeacherQuiz = document.getElementById("backBtnTeacherQuiz");
-  if (backBtnTeacherQuiz) {
-    backBtnTeacherQuiz.style.display =
-      ["teacher", "student", "quiz", "quiz-result"].includes(currentView)
-        ? "block"
-        : "none";
-  }
-
   if (currentView === "teacher") bindTeacherViewEvents();
+
   attachEventListeners();
 
   if (currentView === "quiz") updateTimerUI();
 
-  
   if (currentView === "student-score-history") {
     populateStudentScores();
   }
+
+  if (currentView === "cards" || currentView === "browse-cards") {
+    attachCardsViewListeners();
+  }
+
+  const showBottomNav = ["home", "browse", "themes"].includes(currentView);
+  document.body.classList.toggle("bottom-nav-visible", showBottomNav);
+
+  if (showBottomNav) {
+    app.innerHTML += renderBottomNav();
+  }
+
+  // Apply background theme every render
+if (window.currentTheme && THEME_PRESETS[window.currentTheme]) {
+    const theme = THEME_PRESETS[window.currentTheme];
+
+    if (theme.backgroundImage) {
+        document.body.style.backgroundImage = theme.backgroundImage;
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundRepeat = "no-repeat";
+        document.body.style.backgroundPosition = "center";
+        document.body.style.backgroundAttachment = "fixed";
+    } else {
+        document.body.style.backgroundImage = "none";
+        document.body.style.backgroundColor = theme.colors?.background || "#ffffff";
+    }
+}
+
 }
 
 
@@ -2071,99 +2638,75 @@ function renderSubjectsView() {
     const sets = getSetsForSubject(subject.subject_id);
 
     return `
-      <div
-        class="category-card"
-        data-subject-id="${subject.subject_id}"
-      >
+      <div class="category-card relative p-4 rounded-2xl shadow-sm bg-white flex flex-col items-center text-center"
+           data-subject-id="${subject.subject_id}">
+
         <button
-          class="delete-subject-btn"
+          class="delete-subject-btn absolute top-2 right-2 text-gray-500 hover:text-red-500"
           data-subject-id="${subject.subject_id}"
           aria-label="Delete subject"
         >
           ×
         </button>
 
-        <div class="category-header">
-          <div class="category-icon">
-            <span class="category-icon-text">
-              ${subject.subject_icon}
-            </span>
-          </div>
+        <div class="category-icon mb-3 w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 text-2xl">
+          ${subject.subject_icon}
+        </div>
 
-          <div class="category-meta">
-            <h2 class="category-title">
-              ${subject.subject_name}
-            </h2>
-            <p class="category-subtitle">
-              ${sets.length} set${sets.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+        <div class="category-meta">
+          <h2 class="category-title text-lg font-semibold mb-1">${subject.subject_name}</h2>
+          <p class="category-subtitle text-sm text-gray-500">
+            ${sets.length} set${sets.length !== 1 ? "s" : ""}
+          </p>
         </div>
       </div>
     `;
   }).join("");
 
   return `
-    <div class="subjects-view">
-      <div class="subjects-wrapper">
-        <div class="subjects-container fade-in">
+    <div class="subjects-view w-full h-full overflow-auto p-4">
+      <div class="max-w-4xl mx-auto">
 
-          <div class="subjects-hero">
-          <button
-  id="backToHomeBtn"
-  style="
-    display:none;
-    position:fixed;
-    top:16px;
-    left:16px;
-    z-index:999;
-    padding:8px 14px;
-    border-radius:999px;
-    background:rgba(0,0,0,.08);
-    color:var(--text);
-    font-weight:600;
-    border:none;
-    cursor:pointer;
-  "
->
-  ← Home
-</button>
+        <button id="backToHomeBtn" class="px-4 py-2 mb-4 rounded-lg shadow-sm"
+                style="background: var(--card-bg); color: var(--text); font-size: var(--font-size);">
+          ← Back
+        </button>
 
-            <h1 class="subjects-title">
-              ${config.app_title || defaultConfig.app_title}
-            </h1>
-            <p class="subjects-subtitle">
-              ${config.app_subtitle || defaultConfig.app_subtitle}
-            </p>
-          </div>
-
-          <div class="subjects-actions">
-            <button
-              id="addSubjectBtn"
-              class="add-subject-btn"
-            >
-              + Add New Subject
-            </button>
-          </div>
-
-          ${subjects.length === 0
-      ? `
-                <div class="subjects-empty">
-                  <p>No subjects yet. Create your first subject to get started!</p>
-                </div>
-              `
-      : `
-                <div class="subjects-grid">
-                  ${subjectsHTML}
-                </div>
-              `
-    }
-
+        <div class="subjects-hero mb-6 text-center">
+          <h1 class="subjects-title">${config.app_title || defaultConfig.app_title}</h1>
+          <p class="subjects-subtitle text-gray-500 mt-1">${config.app_subtitle || defaultConfig.app_subtitle}</p>
         </div>
+
+        <div class="subjects-actions mb-6 text-center">
+          <button id="addSubjectBtn" class="px-4 py-2 rounded-xl shadow-md"
+                  style="color: var(--primary); font-size: calc(var(--font-size) * 1.1); background: var(--card-bg); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+            + Add New Subject
+          </button>
+        </div>
+
+        ${subjects.length === 0
+          ? `<div class="subjects-empty text-center text-gray-500 py-12">
+               No subjects yet. Create your first subject to get started!
+             </div>`
+          : `<div class="subjects-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+               ${subjectsHTML}
+             </div>`
+        }
+
       </div>
     </div>
   `;
 }
+
+
+function openSubject(subjectId) {
+  currentSubjectId = subjectId;
+  currentSubject = getSubjects().find(s => s.subject_id === subjectId);
+  currentSet = null; 
+  currentView = "sets";
+  renderApp();
+}
+
 
 function renderSetsView() {
   if (!currentSubject || !currentSubject.subject_id) {
@@ -2175,67 +2718,88 @@ function renderSetsView() {
   const sets = getSetsForSubject(currentSubject.subject_id);
   const subtitleColor = config.secondary_color || defaultConfig.secondary_color;
 
-
   const setsHTML = sets.map(set => {
     const cards = getCardsForSet(set.set_id);
     return `
-          <div class="category-card p-6 rounded-2xl" data-set-id="${set.set_id}" style="background: var(--card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative;">
-            <button class="delete-set-btn" data-set-id="${set.set_id}" style="position: absolute; top: 0.75rem; right: 0.75rem; color: ${subtitleColor}; font-size: calc(var(--font-size) * 1.2);
- background: none; border: none; cursor: pointer; padding: 0.25rem; line-height: 1;">×</button>
-            <h3 style="font-size: calc(var(--font-size) * 1.3);
- font-weight: 400; color: var(--text); margin-bottom: 0.5rem;">${set.set_name}</h3>
-            <p style="font-size: calc(var(--font-size) * 0.875);
- color: ${subtitleColor};">${cards.length} card${cards.length !== 1 ? 's' : ''}</p>
-            ${cards.length > 0 ? `
-              <button class="study-set-btn mt-4 px-4 py-2 rounded-lg" data-set-id="${set.set_id}" style="background: var(--primary); color: white; font-size: calc(var(--font-size) * 0.875);
-">
-                Study Now
-              </button>
-            ` : ''}
-          </div>
-        `;
+      <div class="category-card p-6 rounded-2xl" data-set-id="${set.set_id}" 
+           style="background: var(--card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative;">
+        
+        <button class="delete-set-btn" data-set-id="${set.set_id}" 
+                style="position: absolute; top: 0.75rem; right: 0.75rem; color: ${subtitleColor}; font-size: calc(var(--font-size) * 1.2);
+                       background: none; border: none; cursor: pointer; padding: 0.25rem; line-height: 1;">
+          ×
+        </button>
+
+        <h3 style="font-size: calc(var(--font-size) * 1.3); font-weight: 500; color: var(--text); margin-bottom: 0.5rem;">
+          ${set.set_name}
+        </h3>
+        <p style="font-size: calc(var(--font-size) * 0.875); color: ${subtitleColor};">
+          ${cards.length} card${cards.length !== 1 ? 's' : ''}
+        </p>
+
+        ${cards.length > 0 ? `
+          <button class="study-set-btn mt-4 px-4 py-2 rounded-lg" data-set-id="${set.set_id}" 
+                  style="background: var(--primary); color: white; font-size: calc(var(--font-size) * 0.875);">
+            Study Now
+          </button>` : ''}
+      </div>
+    `;
   }).join('');
 
   return `
-        <div class="w-full h-full overflow-auto">
-          <div class="min-h-full flex flex-col p-6">
-            <div class="max-w-4xl w-full mx-auto">
-              <div class="flex items-center justify-between mb-8 slide-in">
-                <button id="backToSubjectsBtn" class="px-4 py-2 rounded-lg transition-all" style="background: var(--card-bg); color: var(--text); font-size: var(--font-size); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                  ← Back
-                </button>
-                <div class="text-center">
-                  <div style="font-size:calc(var(--font-size) * 2);
- margin-bottom: 0.25rem;">${currentSubject.subject_icon}</div>
-                  <h2 style="font-size:calc(var(--font-size) * 1.8);
- font-weight: 400; color: var(--text);">${currentSubject.subject_name}</h2>
-                </div>
-                <div style="width: 50px;"></div>
-              </div>
+    <div class="w-full h-full overflow-auto">
+      <div class="min-h-full flex flex-col p-6">
+        <div class="max-w-4xl w-full mx-auto">
 
-              <div class="mb-6">
-                <button id="addSetBtn" class="w-full py-4 rounded-xl transition-all font-semibold" style="background: var(--primary); color: white; font-size: calc(var(--font-size) * 1.1);
- box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
-                  + Add New Set
-                </button>
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-8 slide-in">
+            <button id="backToSubjectsBtn" class="px-4 py-2 rounded-lg transition-all" 
+                    style="background: var(--card-bg); color: var(--text); font-size: var(--font-size); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+              ← Back
+            </button>
+            
+            <div class="text-center">
+              <div style="font-size:calc(var(--font-size) * 2); margin-bottom: 0.25rem;">
+                ${currentSubject.subject_icon}
               </div>
-
-              ${sets.length === 0 ? `
-                <div class="text-center py-12" style="color: ${subtitleColor};">
-                  <p style="font-size: calc(var(--font-size) * 1.2);
-">No sets yet. Create your first set!</p>
-                </div>
-              ` : `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  ${setsHTML}
-                </div>
-              `}
+              <h2 style="font-size:calc(var(--font-size) * 1.8); font-weight: 500; color: var(--text);">
+                ${currentSubject.subject_name}
+              </h2>
             </div>
+
+            <div style="width: 50px;"></div>
           </div>
+
+          <!-- Add Set Button -->
+          <div class="mb-6">
+            <button id="addSetBtn" class="w-full py-4 rounded-xl transition-all font-semibold"
+                    style="background: var(--primary); color: white; font-size: calc(var(--font-size) * 1.1); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+              + Add New Set
+            </button>
+          </div>
+
+          <!-- Sets Grid -->
+          ${sets.length === 0 ? `
+            <div class="text-center py-12" style="color: ${subtitleColor}; font-size: calc(var(--font-size) * 1.2);">
+              No sets yet. Create your first set!
+            </div>
+          ` : `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">${setsHTML}</div>`}
         </div>
-      `;
+      </div>
+    </div>
+  `;
 }
+
+function openSet(setId) {
+  if (!currentSubject) return;
+  const sets = getSetsForSubject(currentSubject.subject_id);
+  currentSet = sets.find(s => s.set_id === setId);
+  currentView = "cards";
+  renderApp();
+}
+
 function renderCardsView() {
+  // If no set is selected, go back to sets view
   if (!currentSet || !currentSet.set_id) {
     currentView = "sets";
     renderApp();
@@ -2245,95 +2809,162 @@ function renderCardsView() {
   const cards = getCardsForSet(currentSet.set_id);
 
   const cardsHTML = cards.map(card => `
-    <div class="card-item">
+    <div class="card-item p-4 rounded-xl shadow-sm relative" style="background: var(--card-bg);">
+
       <button
-        class="card-delete-btn"
+        class="card-delete-btn absolute top-2 right-2"
         data-id="${card.id}"
         aria-label="Delete card"
+        style="background:none; border:none; cursor:pointer;"
       >
         <img src="icons/delete.svg" class="icon sm" />
       </button>
 
-      <div class="card-section">
-        <p class="card-label">Question</p>
+      <div class="card-section mt-2">
+        <p class="card-label font-semibold">Question</p>
         <p class="card-text card-question">${card.question}</p>
       </div>
 
-      <div class="card-section">
-        <p class="card-label">Answer</p>
+      <div class="card-section mt-2">
+        <p class="card-label font-semibold">Answer</p>
         <p class="card-text card-answer">${card.answer}</p>
       </div>
     </div>
   `).join("");
 
   return `
-    <div class="view-container">
-      <div class="view-content">
+    <div class="view-container w-full h-full overflow-auto">
+      <div class="view-content max-w-4xl mx-auto p-6">
         <div class="view-inner">
 
           <!-- HEADER -->
-          <div class="cards-header slide-in">
-            <button id="backToSetsBtn" class="btn-back">
-              <img src="icons/back.svg" class="icon sm" />
+          <div class="cards-header flex items-center justify-between mb-6 slide-in">
+            <button id="backToSetsBtn" class="btn-back px-4 py-2 rounded-lg"
+                    style="background: var(--card-bg); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.08);">
+              <img src="icons/back.svg" class="icon sm" /> Back
             </button>
 
-            <div class="cards-title">
-              <h2>${currentSet.set_name}</h2>
-              <p>${cards.length} card${cards.length !== 1 ? "s" : ""}</p>
+            <div class="cards-title text-center">
+              <h2 class="text-xl font-semibold">${currentSet.set_name}</h2>
+              <p class="text-sm text-gray-500">${cards.length} card${cards.length !== 1 ? "s" : ""}</p>
             </div>
 
-            <div class="header-spacer"></div>
+            <div class="header-spacer w-12"></div>
           </div>
 
           <!-- ACTIONS -->
           <div class="cards-actions">
           <div class="actions-inner">
             <button id="addCardBtn" class="action-btn">
-              <img src="icons/add.svg" class="icon md" />
-              <span class="action-label">Add</span>
+              <img src="icons/add.svg" class="icon md" /> Add
             </button>
 
             <button id="aiGenerateBtn" class="action-btn">
-              <img src="icons/ai.svg" class="icon md" />
-              <span class="action-label">AI</span>
+              <img src="icons/ai.svg" class="icon md" /> AI
             </button>
 
             <button id="importCardsJsonBtn" class="action-btn">
-              <img src="icons/import.svg" class="icon md" />
-              <span class="action-label">Import</span>
+              <img src="icons/import.svg" class="icon md" /> Import
             </button>
 
             ${cards.length > 0 ? `
               <button id="studyCardsBtn" class="action-btn">
-                <img src="icons/flashcard.svg" class="icon md" />
-                <span class="action-label">Study</span>
-              </button>
-            ` : ""}
+                <img src="icons/flashcard.svg" class="icon md" /> Study
+              </button>` : ""}
 
             ${cards.length > 1 ? `
               <button id="quizCardsBtn" class="action-btn">
-                <img src="icons/quiz.svg" class="icon md" />
-                <span class="action-label">Quiz</span>
-              </button>
-            ` : ""}
+                <img src="icons/quiz.svg" class="icon md" /> Quiz
+              </button>` : ""}
               </div>
           </div>
 
           <!-- EMPTY STATE / LIST -->
           ${cards.length === 0 ? `
-            <div class="cards-empty">
-              <p>No cards yet. Add your first flashcard!</p>
-            </div>
-          ` : `
-            <div class="cards-list">
+            <div class="cards-empty text-center py-12 text-gray-500">
+              <p class="text-lg">No cards yet. Add your first flashcard!</p>
+            </div>` : `
+            <div class="cards-list grid grid-cols-1 md:grid-cols-2 gap-6">
               ${cardsHTML}
-            </div>
-          `}
+            </div>`}
 
         </div>
       </div>
     </div>
   `;
+}
+
+function attachCardsViewListeners() {
+  const addCardBtn = document.getElementById('addCardBtn');
+  if (addCardBtn) {
+    addCardBtn.addEventListener('click', () => {
+      showAddCardModal(); // Opens your modal to add a card
+    });
+  }
+
+  const aiGenerateBtn = document.getElementById('aiGenerateBtn');
+  if (aiGenerateBtn) {
+    aiGenerateBtn.addEventListener('click', () => {
+      showAIGenerateModal(); // Opens AI card generation modal
+    });
+  }
+
+  const importCardsJsonBtn = document.getElementById('importCardsJsonBtn');
+  if (importCardsJsonBtn) {
+    importCardsJsonBtn.addEventListener('click', () => {
+      importCardsFromJsonForCurrentSet(); // Handles JSON import
+    });
+  }
+
+  const studyCardsBtn = document.getElementById('studyCardsBtn');
+  if (studyCardsBtn) {
+    studyCardsBtn.addEventListener('click', () => {
+      currentCardIndex = 0;
+      isFlipped = false;
+      currentView = 'study';
+      renderApp();
+    });
+  }
+
+  const quizCardsBtn = document.getElementById('quizCardsBtn');
+  if (quizCardsBtn) {
+    quizCardsBtn.addEventListener('click', () => {
+      const cards = getCardsForSet(currentSet.set_id);
+      quizQuestions = generateQuizQuestions(cards);
+      quizIndex = 0;
+      quizScore = 0;
+      resetStudyTimer(); // if applicable
+      currentView = 'quiz';
+      renderApp();
+    });
+
+      const deleteCardBtns = document.querySelectorAll('.card-delete-btn');
+  deleteCardBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation(); // Prevent parent clicks
+      const cardId = btn.dataset.id;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>';
+
+      // Delete the card (replace with your actual delete logic)
+      await window.dataSdk.delete({ id: cardId });
+
+      // Re-render the cards view
+      renderApp();
+    });
+  });
+  }
+
+  // Back button to sets
+  const backToSetsBtn = document.getElementById('backToSetsBtn');
+  if (backToSetsBtn) {
+    backToSetsBtn.addEventListener('click', () => {
+      currentSet = null;
+      currentView = 'sets';
+      renderApp();
+    });
+  }
 }
 
 function startStudyTimer() {
@@ -2605,7 +3236,7 @@ function renderQuizView() {
               <option value="show" ${showTimerControls ? "selected" : ""}>Show</option>
               <option value="hide" ${!showTimerControls ? "selected" : ""}>Hide</option>
             </select>
-                        <button id="toggleTimerBtn" onclick="toggleTimerVisibility()" style="padding:10px 16px; border-radius:10px; background:rgba(0,0,0,.08); color:${text}; font-weight:500; box-shadow:0 2px 6px rgba(0,0,0,.05); transition:0.2s;">
+                        <button id="toggleTimerBtn" onclick="toggleTimerVisibility()" style="padding:10px 16px; border-radius:10px; background:${bg}; color:${text}; font-weight:500; box-shadow:0 2px 6px rgba(0,0,0,.05); transition:0.2s;">
               ${timerHidden ? "Show Timer" : "Hide Timer"}
             </button>
           </div>
@@ -3226,301 +3857,240 @@ function showToast(message) {
 }
 
 function attachEventListeners() {
-  const openFlashcardsBtn = document.getElementById("openFlashcardsBtn");
-if (openFlashcardsBtn) {
-  openFlashcardsBtn.addEventListener("click", () => {
-    currentView = "subjects";
-    renderApp();
-  });
-}
-
-const backBtn = document.getElementById("backToHomeBtn");
-
-if (backBtn) {
- backBtn.addEventListener("click", () => {
-  currentSet = null;
-  currentCardIndex = 0;
-  studyQueue = [];
-  currentView = "home";
-  renderApp();
-});
-}
-  const backBtnteacherquiz = document.getElementById("backBtnTeacherQuiz");
-  if (backBtnteacherquiz) {
-    backBtnteacherquiz.onclick = () => {
+  // ---- BACK BUTTONS ----
+  const backToHomeBtn = document.getElementById("backToHomeBtn");
+  if (backToHomeBtn) {
+    backToHomeBtn.onclick = () => {
+      currentSet = null;
+      currentCardIndex = 0;
+      studyQueue = [];
       currentView = "home";
       renderApp();
     };
   }
 
-  const addSubjectBtn = document.getElementById('addSubjectBtn');
-  if (addSubjectBtn) {
-    addSubjectBtn.addEventListener('click', showAddSubjectModal);
+  const backBtnTeacherQuiz = document.getElementById("backBtnTeacherQuiz");
+  if (backBtnTeacherQuiz) {
+    backBtnTeacherQuiz.onclick = () => {
+      currentView = "home";
+      renderApp();
+    };
   }
 
-  const addSetBtn = document.getElementById('addSetBtn');
-  if (addSetBtn) {
-    addSetBtn.addEventListener('click', showAddSetModal);
+  const backToSubjectsBtn = document.getElementById("backToSubjectsBtn");
+  if (backToSubjectsBtn) {
+    backToSubjectsBtn.onclick = () => {
+      currentSubject = null;
+      currentView = "subjects";
+      renderApp();
+    };
   }
 
-  const addCardBtn = document.getElementById('addCardBtn');
-  if (addCardBtn) {
-    addCardBtn.addEventListener('click', showAddCardModal);
+  const backToSetsBtn = document.getElementById("backToSetsBtn");
+  if (backToSetsBtn) {
+    backToSetsBtn.onclick = () => {
+      currentSet = null;
+      currentView = "sets";
+      renderApp();
+    };
   }
 
-  const importCardsJsonBtn = document.getElementById('importCardsJsonBtn');
-  if (importCardsJsonBtn) {
-    importCardsJsonBtn.addEventListener('click', importCardsFromJsonForCurrentSet);
+  const backToCardsBtn = document.getElementById("backToCardsBtn");
+  if (backToCardsBtn) {
+    backToCardsBtn.onclick = () => {
+      currentCardIndex = 0;
+      isFlipped = false;
+      currentView = "cards";
+      renderApp();
+    };
   }
 
-  const categoryCards = document.querySelectorAll('.category-card');
-  categoryCards.forEach(card => {
-    if (card.dataset.subjectId) {
-      card.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('delete-subject-btn')) {
-          const subjectId = card.dataset.subjectId;
-          currentSubject = getSubjects().find(s => s.subject_id === subjectId);
-          currentView = 'sets';
-          renderApp();
-        }
-      });
-    } else if (card.dataset.setId) {
-      card.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('delete-set-btn') && !e.target.classList.contains('study-set-btn')) {
-          const setId = card.dataset.setId;
-          currentSet = getSetsForSubject(currentSubject.subject_id).find(s => s.set_id === setId);
-          currentView = 'cards';
-          renderApp();
-        }
-      });
-    }
+  // ---- SUBJECT, SET, CARD ACTIONS ----
+  const addSubjectBtn = document.getElementById("addSubjectBtn");
+  if (addSubjectBtn) addSubjectBtn.onclick = showAddSubjectModal;
+
+  const addSetBtn = document.getElementById("addSetBtn");
+  if (addSetBtn) addSetBtn.onclick = showAddSetModal;
+
+  const addCardBtn = document.getElementById("addCardBtn");
+  if (addCardBtn) addCardBtn.onclick = showAddCardModal;
+
+  const importCardsJsonBtn = document.getElementById("importCardsJsonBtn");
+  if (importCardsJsonBtn) importCardsJsonBtn.onclick = importCardsFromJsonForCurrentSet;
+
+  // Subject and Set cards
+  document.querySelectorAll(".category-card").forEach(card => {
+    card.onclick = e => {
+      if (card.dataset.subjectId && !e.target.classList.contains("delete-subject-btn")) {
+        const subjectId = card.dataset.subjectId;
+        currentSubject = getSubjects().find(s => s.subject_id === subjectId);
+        currentView = "sets";
+        renderApp();
+      }
+      if (card.dataset.setId && !e.target.classList.contains("delete-set-btn") && !e.target.classList.contains("study-set-btn")) {
+        const setId = card.dataset.setId;
+        currentSet = getSetsForSubject(currentSubject.subject_id).find(s => s.set_id === setId);
+        currentView = "cards";
+        renderApp();
+      }
+    };
   });
 
-  const deleteSubjectBtns = document.querySelectorAll('.delete-subject-btn');
-  deleteSubjectBtns.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+  // Delete buttons
+  document.querySelectorAll(".delete-subject-btn").forEach(btn => {
+    btn.onclick = async e => {
       e.stopPropagation();
       const subjectId = btn.dataset.subjectId;
-      const subject = allData.find(d => d.type === 'subject' && d.subject_id === subjectId);
-
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span>';
-
+      btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>';
       const itemsToDelete = allData.filter(d =>
-        (d.type === 'subject' && d.subject_id === subjectId) ||
-        (d.type === 'set' && d.subject_id === subjectId) ||
-        (d.type === 'card' && allData.some(s => s.type === 'set' && s.set_id === d.set_id && s.subject_id === subjectId))
+        (d.type === "subject" && d.subject_id === subjectId) ||
+        (d.type === "set" && d.subject_id === subjectId) ||
+        (d.type === "card" && allData.some(s => s.type === "set" && s.set_id === d.set_id && s.subject_id === subjectId))
       );
-
-      for (const item of itemsToDelete) {
-        await window.dataSdk.delete({ id: item.id }, true);
-      }
-      window.dataSdk.init(dataHandler); // reload + notify cleanly
-
+      for (const item of itemsToDelete) await window.dataSdk.delete({ id: item.id }, true);
+      window.dataSdk.init(dataHandler);
       if (currentSubject?.subject_id === subjectId) {
         currentSubject = null;
-        currentView = 'subjects';
+        currentView = "subjects";
       }
-    });
+    };
   });
 
-  const deleteSetBtns = document.querySelectorAll('.delete-set-btn');
-  deleteSetBtns.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+  document.querySelectorAll(".delete-set-btn").forEach(btn => {
+    btn.onclick = async e => {
       e.stopPropagation();
       const setId = btn.dataset.setId;
-
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span>';
-
-      const itemsToDelete = allData.filter(d =>
-        (d.type === 'set' && d.set_id === setId) ||
-        (d.type === 'card' && d.set_id === setId)
-      );
-
-      for (const item of itemsToDelete) {
-        await window.dataSdk.delete({ id: item.id });
-      }
-    });
+      btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>';
+      const itemsToDelete = allData.filter(d => (d.type === "set" && d.set_id === setId) || (d.type === "card" && d.set_id === setId));
+      for (const item of itemsToDelete) await window.dataSdk.delete({ id: item.id });
+      renderApp();
+    };
   });
 
-  const deleteCardBtns = document.querySelectorAll('.delete-card-btn');
-  deleteCardBtns.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+  document.querySelectorAll(".delete-card-btn").forEach(btn => {
+    btn.onclick = async e => {
       e.stopPropagation();
-
       const id = btn.dataset.id;
-
       btn.disabled = true;
-      btn.innerHTML =
-        '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>';
+      btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>';
       await window.dataSdk.delete({ id });
-    });
+      renderApp();
+    };
   });
 
-
-  const studySetBtns = document.querySelectorAll('.study-set-btn');
-  studySetBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
+  // Study Set buttons
+  document.querySelectorAll(".study-set-btn").forEach(btn => {
+    btn.onclick = e => {
       e.stopPropagation();
       const setId = btn.dataset.setId;
       currentSet = getSetsForSubject(currentSubject.subject_id).find(s => s.set_id === setId);
       currentCardIndex = 0;
       isFlipped = false;
-      currentView = 'study';
+      currentView = "study";
       renderApp();
-    });
+    };
   });
 
-  const studyCardsBtn = document.getElementById('studyCardsBtn');
-  if (studyCardsBtn) {
-    studyCardsBtn.addEventListener('click', () => {
-      currentCardIndex = 0;
-      isFlipped = false;
-      currentView = 'study';
-      renderApp();
-    });
-  }
+  // Study / Quiz buttons
+  const studyCardsBtn = document.getElementById("studyCardsBtn");
+  if (studyCardsBtn) studyCardsBtn.onclick = () => {
+    currentCardIndex = 0;
+    isFlipped = false;
+    currentView = "study";
+    renderApp();
+  };
 
-  const quizBtn = document.getElementById('quizCardsBtn');
-  if (quizBtn) {
-    quizBtn.addEventListener('click', () => {
-      const cards = getCardsForSet(currentSet.set_id);
-quizQuestions = generateQuizQuestions(cards);
-quizIndex = 0;
-quizScore = 0;
+  const quizCardsBtn = document.getElementById("quizCardsBtn");
+  if (quizCardsBtn) quizCardsBtn.onclick = () => {
+    const cards = getCardsForSet(currentSet.set_id);
+    quizQuestions = generateQuizQuestions(cards);
+    quizIndex = 0;
+    quizScore = 0;
+    resetStudyTimer();
+    currentView = "quiz";
+    renderApp();
+  };
 
-resetStudyTimer();
+  // Flip / Next / Prev card buttons
+  const flipBtn = document.getElementById("flipBtn");
+  if (flipBtn) flipBtn.onclick = () => {
+    const cardInner = document.getElementById("cardInner");
+    isFlipped = !isFlipped;
+    cardInner?.classList.toggle("flipped", isFlipped);
+  };
 
-currentView = 'quiz';
-renderApp();
-
-    });
-  }
-
-  const backToSubjectsBtn = document.getElementById('backToSubjectsBtn');
-  if (backToSubjectsBtn) {
-    backToSubjectsBtn.addEventListener('click', () => {
-      currentView = 'subjects';
-      currentSubject = null;
-      renderApp();
-    });
-  }
-
-  const backToSetsBtn = document.getElementById('backToSetsBtn');
-  if (backToSetsBtn) {
-    backToSetsBtn.addEventListener('click', () => {
-      currentView = 'sets';
-      currentSet = null;
-      renderApp();
-    });
-  }
-
-  const backToCardsBtn = document.getElementById('backToCardsBtn');
-  if (backToCardsBtn) {
-    backToCardsBtn.addEventListener('click', () => {
-      currentView = 'cards';
-      currentCardIndex = 0;
-      isFlipped = false;
-      renderApp();
-    });
-  }
-
-  const flipBtn = document.getElementById('flipBtn');
-  if (flipBtn) {
-    flipBtn.addEventListener('click', () => {
-      const cardInner = document.getElementById('cardInner');
-      isFlipped = !isFlipped;
-      if (isFlipped) {
-        cardInner.classList.add('flipped');
-      } else {
-        cardInner.classList.remove('flipped');
-      }
-    });
-  }
-
-  const prevBtn = document.getElementById('prevBtn');
-  if (prevBtn && currentCardIndex > 0) {
-    prevBtn.addEventListener('click', () => {
+  const prevBtn = document.getElementById("prevBtn");
+  if (prevBtn) prevBtn.onclick = () => {
+    if (currentCardIndex > 0) {
       currentCardIndex--;
       isFlipped = false;
       renderApp();
-    });
-  }
+    }
+  };
 
-  const nextBtn = document.getElementById('nextBtn');
-  const cards = getCardsForSet(currentSet?.set_id || '');
-  if (nextBtn && currentCardIndex < cards.length - 1) {
-    nextBtn.addEventListener('click', () => {
+  const nextBtn = document.getElementById("nextBtn");
+  if (nextBtn) nextBtn.onclick = () => {
+    const cards = getCardsForSet(currentSet?.set_id || []);
+    if (currentCardIndex < cards.length - 1) {
       currentCardIndex++;
       isFlipped = false;
       renderApp();
-    });
-  }
+    }
+  };
+
+  // AI Generate
   const aiGenerateBtn = document.getElementById("aiGenerateBtn");
+  if (aiGenerateBtn) aiGenerateBtn.onclick = showAIGenerateModal;
 
-  if (aiGenerateBtn) {
-    aiGenerateBtn.addEventListener("click", () => {
-      showAIGenerateModal();
-    });
-  }
-  // QUIZ option click handlers
-  if (currentView === 'quiz') {
-  document.querySelectorAll(".quiz-option").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault(); // Just in case
-
-      // Ignore clicks if already disabled
-      if (btn.classList.contains("disabled")) return;
-
-      const selected = btn.dataset.answer;
-      const correct = quizQuestions[quizIndex].correct;
-
-      // Disable all options immediately
-      document.querySelectorAll(".quiz-option").forEach(b => {
-        b.classList.add("disabled");
-        b.style.pointerEvents = "none"; // extra safety
-      });
-
-      // Add feedback animation
-      btn.style.transform = "scale(1.05)";
-      setTimeout(() => btn.style.transform = "scale(1)", 200);
-
-      // Mark answers
-      if (selected === correct) {
-        btn.classList.add("correct");
-        quizScore++;
-      } else {
-        btn.classList.add("wrong");
-        document.querySelectorAll(".quiz-option").forEach(b => {
-          if (b.dataset.answer === correct) {
-            b.classList.add("correct");
-          }
-        });
-      }
-
-      // Move to next question after short delay
-      setTimeout(() => {
-        quizIndex++;
-        if (quizIndex >= quizQuestions.length) {
-          currentView = "quiz-result";
-        }
-        renderApp();
-      }, 800);
-    });
-  });
-}
-
-const exitQuizBtn = document.getElementById('exitQuizBtn');
-if (exitQuizBtn) {
-  exitQuizBtn.addEventListener('click', () => {
+  // Exit Quiz
+  const exitQuizBtn = document.getElementById("exitQuizBtn");
+  if (exitQuizBtn) exitQuizBtn.onclick = () => {
     stopStudyTimer();
     resetStudyTimer();
-    currentView = 'cards';
+    currentView = "cards";
     renderApp();
-  });
+  };
+
+  // Quiz option buttons
+  if (currentView === "quiz") {
+    document.querySelectorAll(".quiz-option").forEach(btn => {
+      btn.onclick = e => {
+        e.preventDefault();
+        if (btn.classList.contains("disabled")) return;
+
+        const selected = btn.dataset.answer;
+        const correct = quizQuestions[quizIndex].correct;
+
+        document.querySelectorAll(".quiz-option").forEach(b => {
+          b.classList.add("disabled");
+          b.style.pointerEvents = "none";
+        });
+
+        btn.style.transform = "scale(1.05)";
+        setTimeout(() => (btn.style.transform = "scale(1)"), 200);
+
+        if (selected === correct) {
+          btn.classList.add("correct");
+          quizScore++;
+        } else {
+          btn.classList.add("wrong");
+          document.querySelectorAll(".quiz-option").forEach(b => {
+            if (b.dataset.answer === correct) b.classList.add("correct");
+          });
+        }
+
+        setTimeout(() => {
+          quizIndex++;
+          if (quizIndex >= quizQuestions.length) currentView = "quiz-result";
+          renderApp();
+        }, 800);
+      };
+    });
+  }
 }
-}
+
 
 function adjustColor(color, amount) {
   const num = parseInt(color.slice(1), 16);

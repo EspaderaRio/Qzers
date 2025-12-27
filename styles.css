@@ -9,13 +9,31 @@
   --radius: 16px;
   --font-family: Inter, system-ui, sans-serif;
 }
+#app {
+  background-image: var(--backgroundImage);
+  background-size: cover;
+  background-position: center;
+}
 
-/* Global text */
+body {
+  transition: background 0.4s ease-in-out;
+}
+
+.card-study, .browse-card, .theme-section {
+  backdrop-filter: blur(8px) saturate(140%);
+  background: rgba(255,255,255,0.15); 
+  color: white; 
+}
+
 body {
   font-family: var(--font-family);
   font-size: var(--font-size);
   background: var(--background);
   color: var(--text);
+  background-image: var(--backgroundImage);
+  background-size: cover;
+  background-position: center;
+  margin: 0;
   box-sizing: border-box;
 }
 h1 { font-size: calc(var(--font-size) * 2.2); }
@@ -333,7 +351,7 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
   justify-content: center;
   align-items: flex-start;   /* 👈 important */
 
-  padding: 1.25rem;          /* 👈 breathing room at top */
+  padding: 1rem;          /* 👈 breathing room at top */
   overflow-y: auto;
 
   z-index: 1300;
@@ -1204,5 +1222,12 @@ h3 { font-size: calc(var(--font-size) * 1.4); }
 #student-score-container {
   max-height: 70vh;
   overflow-y: auto;
+}
+
+body.bottom-nav-visible .settings-fab {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+  bottom: 60px;  /* lifted above bottom nav */
 }
 
