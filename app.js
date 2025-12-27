@@ -229,7 +229,7 @@ const THEME_PRESETS = {
     }
   },
 
-kpop_blackpink: {
+blackpink: {
   colors: {
     primary: "#ff4d6d",
     background: "#ffe3ec",
@@ -240,31 +240,36 @@ kpop_blackpink: {
   backgroundImage: "url('images/blackpink.svg')"
 },
 
-kpop_bts: {
-  colors: { primary: "#6a5acd", background: "#f3f0ff", card: "#e6e1ff", text: "#111" },
+bts: {
+  colors: { 
+    primary: "#6a5acd", 
+    background: "#f3f0ff", 
+    card: "#e6e1ff", 
+    text: "#111" 
+  },
   font: { family: "Poppins" },
-  backgroundImage: "url('https://i.imgur.com/da5Z6Y1.jpg')"
+  backgroundImage: "url('images/bts.svg')"
 },
 
-kpop_twice: {
+twice: {
   colors: { primary: "#ff6ec7", background: "#fff5fa", card: "#ffe0f2", text: "#111" }
 },
-kpop_seventeen: {
+seventeen: {
   colors: { primary: "#9d8df1", background: "#f6f3ff", card: "#e8e0ff", text: "#111" }
 },
-kpop_straykids: {
+straykids: {
   colors: { primary: "#bd2222", background: "#fff5f5", card: "#ffe0e0", text: "#111" }
 },
 kpop_exo: {
   colors: { primary: "#111", background: "#e5e7eb", card: "#fff", text: "#000" }
 },
-kpop_redvelvet: {
+redvelvet: {
   colors: { primary: "#e63946", background: "#fff4f4", card: "#ffe1e1", text: "#111" }
 },
-kpop_itzy: {
+itzy: {
   colors: { primary: "#ff0099", background: "#fce7f7", card: "#ffdaf5", text: "#111" }
 },
-kpop_newjeans: {
+newjeans: {
   colors: { primary: "#4ea8ff", background: "#e7f3ff", card: "#d0e8ff", text: "#111" }
 }
 
@@ -703,19 +708,19 @@ function renderThemesView() {
   const categories = {
     "Nature": ["forest", "mint", "lavender", "coffee"],
     "K-pop": [
-  "kpop_blackpink", 
-  "kpop_bts", 
-  "kpop_twice",
-  "kpop_seventeen",
-  "kpop_straykids",
-  "kpop_exo",
-  "kpop_redvelvet",
-  "kpop_itzy",
-  "kpop_newjeans"
+  "blackpink", 
+  "bts", 
+  "twice",
+  "seventeen",
+  "straykids",
+  "exo",
+  "redvelvet",
+  "itzy",
+  "newjeans"
 ],
     "Dark Aesthetic": ["midnight", "graphite", "cyber"],
     "Light & Minimal": ["light", "paper", "sunset", "rose"],
-    "Animals": ["sea", "lake"], // add themes later
+    "Animals": ["sea", "lake"],
   };
 
   const themeSection = Object.keys(categories).map(category => `
@@ -761,13 +766,26 @@ function applyThemePreset(name) {
   const theme = THEME_PRESETS[name];
   if (!theme) return;
 
-  userSettings.colors = theme.colors || userSettings.colors;
-  userSettings.font = theme.font || userSettings.font;
-  userSettings.backgroundImage = theme.backgroundImage || null;
+  window.currentTheme = name;
+  localStorage.setItem("flashcard-theme", name);
 
-  applyUserSettings();
+  const r = document.documentElement.style;
+
+  r.setProperty("--primary", theme.colors.primary);
+  r.setProperty("--card-bg", theme.colors.card);
+  r.setProperty("--text", theme.colors.text);
+  r.setProperty("--background", theme.colors.background || "#ffffff");
+
+  if (theme.backgroundImage) {
+    r.setProperty("--background-image", theme.backgroundImage);
+  } else {
+    r.setProperty("--background-image", "none");
+  }
+
   renderApp();
 }
+
+
 
 function renderHomeView() {
   return `
@@ -2479,16 +2497,37 @@ function updateSetting(path, value) {
 }
 
 function applyThemePreset(themeKey) {
-  const preset = THEME_PRESETS[themeKey];
-  if (!preset) return;
+  const theme = THEME_PRESETS[themeKey];
+  if (!theme) return;
 
-  userSettings = deepMerge(userSettings, {
-    theme: themeKey,
-    ...preset
-  });
+  const r = document.documentElement.style;
 
-  saveAndApplySettings();
+  r.setProperty("--primary", theme.colors.primary);
+  r.setProperty("--background", theme.colors.background || "#ffffff");
+  r.setProperty("--card-bg", theme.colors.card);
+  r.setProperty("--text", theme.colors.text);
+
+  r.setProperty("--font-family", theme.font?.family || "Inter, system-ui, sans-serif");
+  r.setProperty("--font-size", `${theme.font?.size || 14}px`);
+  r.setProperty("--line-height", theme.font?.lineHeight || "1.5");
+
+  if (theme.layout?.radius) r.setProperty("--radius", `${theme.layout.radius}px`);
+
+  const bgImage = theme.backgroundImage || "none";
+  r.setProperty("--background-image", bgImage);
+
+  document.body.style.backgroundImage = bgImage !== "none" ? bgImage : "none";
+  document.body.style.backgroundColor = bgImage === "none" ? theme.colors.background : "transparent";
+
+  // Save the selected theme
+  localStorage.setItem("selectedTheme", themeKey);
 }
+
+// On page load, apply the saved theme
+const savedTheme = localStorage.getItem("selectedTheme") || "light";
+applyThemePreset(savedTheme);
+
+
 
 function deepMerge(target, source) {
   const output = structuredClone(target);
