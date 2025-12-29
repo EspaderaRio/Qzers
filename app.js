@@ -325,60 +325,325 @@ newjeans: {
 
 };
 
+const COLOR_PALETTES = {
+  /* ───── Light / Clean ───── */
+  pastel:      { primary:"#ff9ecb", background:"#fff5fb", card:"#ffe3f1", text:"#4a4a4a" },
+  softMint:    { primary:"#97f2d7", background:"#eafff7", card:"#c8ffee", text:"#2d3a34" },
+  airyBlue:    { primary:"#7dd3fc", background:"#e0f7ff", card:"#cdefff", text:"#0a2b3a" },
+  creamLatte:  { primary:"#c69c6d", background:"#f9f0e5", card:"#f2ded0", text:"#3a2a20" },
+  roseCloud:   { primary:"#ffb3c1", background:"#fff0f5", card:"#ffe1eb", text:"#432b3b" },
+  lilacMist:   { primary:"#c7a0ff", background:"#f4e9ff", card:"#e8d5ff", text:"#392f52" },
+  minimalGray: { primary:"#4b5563", background:"#f3f4f6", card:"#e5e7eb", text:"#1f2937" },
+
+  /* ───── Dark Modes ───── */
+  dark:        { primary:"#5aa2ff", background:"#0b111e", card:"#111a2d", text:"#e6ecff" },
+  obsidian:    { primary:"#00eaff", background:"#020617", card:"#0f172a", text:"#d6faff" },
+  midnight:    { primary:"#bfdbfe", background:"#0a1733", card:"#102347", text:"#eafbff" },
+  cyberGray:   { primary:"#00ffa3", background:"#1b1b1b", card:"#262626", text:"#ffffff" },
+  noirBrown:   { primary:"#d0a354", background:"#221c15", card:"#2d251c", text:"#f1e6d0" },
+  neonNight:   { primary:"#39ff14", background:"#000000", card:"#0a0a0a", text:"#d3ffd1" },
+  vaporDark:   { primary:"#ff87f2", background:"#1a0225", card:"#2a0438", text:"#ffd8fa" },
+
+  /* ───── Nature / Earth ───── */
+  forest:      { primary:"#16a34a", background:"#042f1a", card:"#064e3b", text:"#eafff7" },
+  mossGreen:   { primary:"#6ee7b7", background:"#064e3b", card:"#0d6f52", text:"#eafff2" },
+  sandDune:    { primary:"#d6a67a", background:"#2c241b", card:"#3a2f23", text:"#f7e9d8" },
+  autumnLeaf:  { primary:"#e77f24", background:"#331806", card:"#52240c", text:"#f6d4b4" },
+  ocean:       { primary:"#38bdf8", background:"#e0f7ff", card:"#b8ecff", text:"#0b2a36" },
+  coralReef:   { primary:"#ff7a7a", background:"#ffecec", card:"#ffd6d6", text:"#3f1a1a" },
+  natureWood:  { primary:"#b08968", background:"#f2e9dc", card:"#e6ccb2", text:"#3a2e28" },
+
+  /* ───── Fun / Pop / Gaming ───── */
+  neon:        { primary:"#00f0ff", background:"#00131a", card:"#002a33", text:"#00e7ff" },
+  arcade:      { primary:"#ff00c8", background:"#000428", card:"#1a0340", text:"#ffd6fb" },
+  synthwave:   { primary:"#ff00a0", background:"#140022", card:"#240042", text:"#ffdbfa" },
+  gamerGreen:  { primary:"#26ff00", background:"#001100", card:"#002200", text:"#caffc6" },
+  retroPixel:  { primary:"#ffcc00", background:"#2a1e05", card:"#3a2b07", text:"#fff7d1" },
+  cosmicBlue:  { primary:"#00bfff", background:"#001733", card:"#01294a", text:"#c9eeff" },
+  dragonFire:  { primary:"#ff462b", background:"#200000", card:"#340000", text:"#ffb1a6" },
+
+  /* ───── Aesthetic / Cute / Soft ───── */
+  sakura:      { primary:"#ff9bbf", background:"#ffeaf3", card:"#ffd4e7", text:"#402332" },
+  skyCotton:   { primary:"#8ccaff", background:"#e9f5ff", card:"#d2ebff", text:"#172534" },
+  matchaMilk:  { primary:"#9fc788", background:"#f3f9ef", card:"#e7f4e2", text:"#2e4027" },
+  sunset:      { primary:"#ff7d45", background:"#fff0e6", card:"#ffe0d1", text:"#4a1e09" },
+  lavenderMilk:{ primary:"#b98cff", background:"#f7f1ff", card:"#e6daff", text:"#2f2452" },
+  bubbleGum:   { primary:"#ff77e9", background:"#ffe3fb", card:"#ffc6f5", text:"#45163b" },
+
+  /* ───── Professional / UI Neutral ───── */
+  officeBlue:  { primary:"#2563eb", background:"#f3f6fc", card:"#dbe7ff", text:"#1e293b" },
+  slateMono:   { primary:"#64748b", background:"#f1f5f9", card:"#e2e8f0", text:"#1e293b" },
+  steelGrey:   { primary:"#4b5563", background:"#1f2937", card:"#374151", text:"#e5e7eb" },
+  businessTeal:{ primary:"#14b8a6", background:"#ecfdfa", card:"#cff8f3", text:"#083d37" }
+};
+
+
 const BUILT_IN_SETS = {
-  math: {
-    subject: {
-      name: "Math",
-      icon: "➗"
-    },
-    set: {
-      name: "Basic Math"
-    },
-    cards: [
-      { question: "2 + 2", answer: "4" },
-      { question: "5 × 3", answer: "15" },
-      { question: "10 ÷ 2", answer: "5" }
-    ]
+math: {
+  subject: {
+    name: "Math",
+    icon: "➗"
   },
+  set: {
+    name: "Basic Math Expanded"
+  },
+  cards: [
+    // Addition
+    { question: "2 + 2", answer: "4" },
+    { question: "7 + 5", answer: "12" },
+    { question: "15 + 6", answer: "21" },
+    { question: "100 + 250", answer: "350" },
 
-  science: {
-    subject: {
-      name: "Science",
-      icon: "🔬"
-    },
-    set: {
-      name: "Basic Science"
-    },
-    cards: [
-      { question: "What planet is closest to the Sun?", answer: "Mercury" },
-      { question: "H2O is?", answer: "Water" }
-    ]
-  },
+    // Subtraction
+    { question: "9 - 4", answer: "5" },
+    { question: "25 - 10", answer: "15" },
+    { question: "120 - 45", answer: "75" },
 
-  english: {
-    subject: {
-      name: "English",
-      icon: "📖"
-    },
-    set: {
-      name: "Basic English"
-    },
-    cards: [
-      { question: "Synonym of fast?", answer: "Quick" },
-      { question: "Opposite of hot?", answer: "Cold" }
-    ]
+    // Multiplication
+    { question: "5 × 3", answer: "15" },
+    { question: "6 × 7", answer: "42" },
+    { question: "12 × 12", answer: "144" },
+
+    // Division
+    { question: "10 ÷ 2", answer: "5" },
+    { question: "36 ÷ 6", answer: "6" },
+    { question: "81 ÷ 9", answer: "9" },
+
+    // Fractions
+    { question: "1/2 + 1/2", answer: "1" },
+    { question: "3/4 - 1/4", answer: "1/2" },
+    { question: "1/3 × 3", answer: "1" },
+
+    // Algebra basics
+    { question: "Solve: x + 5 = 12", answer: "x = 7" },
+    { question: "Solve: 3x = 18", answer: "x = 6" },
+    { question: "Solve: x - 8 = 10", answer: "x = 18" },
+
+    // Geometry
+    { question: "How many sides does a triangle have?", answer: "3" },
+    { question: "Area of a square = ?", answer: "side × side" },
+    { question: "A shape with 6 sides is called?", answer: "Hexagon" }
+  ]
+},
+
+science: {
+  subject: {
+    name: "Science",
+    icon: "🔬"
   },
+  set: {
+    name: "Basic Science"
+  },
+  cards: [
+    { question: "Water formula", answer: "H2O" },
+    { question: "Sun is a?", answer: "Star" },
+    { question: "Earth revolves around?", answer: "Sun" },
+    { question: "Gravity", answer: "Force that attracts objects toward each other" },
+    { question: "Photosynthesis", answer: "Process plants make food using sunlight" },
+    { question: "Atom", answer: "Smallest unit of matter" },
+    { question: "Molecule", answer: "Two or more atoms bonded together" },
+    { question: "Solid", answer: "State of matter with fixed shape" },
+    { question: "Liquid", answer: "State of matter with no fixed shape" },
+    { question: "Gas", answer: "State of matter that expands to fill space" },
+    { question: "Evaporation", answer: "Liquid turning into gas" },
+    { question: "Condensation", answer: "Gas turning into liquid" },
+    { question: "Oxygen symbol", answer: "O" },
+    { question: "Carbon symbol", answer: "C" },
+    { question: "Nitrogen symbol", answer: "N" },
+    { question: "Force", answer: "Push or pull on an object" },
+    { question: "Energy", answer: "Ability to do work" },
+    { question: "Magnet attracts?", answer: "Iron and steel" },
+    { question: "Boiling point of water", answer: "100°C or 212°F" },
+    { question: "Freezing point of water", answer: "0°C or 32°F" }
+  ]
+},
+
+history: {
+  subject: {
+    name: "History",
+    icon: "🏛️"
+  },
+  set: {
+    name: "World History Basics"
+  },
+  cards: [
+    { question: "First president of the Philippines", answer: "Emilio Aguinaldo"},
+    { question: "Year World War II ended", answer: "1945" },
+    { question: "Ancient civilization in Egypt", answer: "Egyptians" },
+    { question: "Great Wall is in?", answer: "China" },
+    { question: "Renaissance period", answer: "14th to 17th century Europe" },
+    { question: "Columbus discovered America in?", answer: "1492" },
+    { question: "Roman Empire capital", answer: "Rome" },
+    { question: "Industrial Revolution started in", answer: "Britain" },
+    { question: "Declaration of Independence year", answer: "1776" },
+    { question: "Napoleon was from?", answer: "France" }
+  ]
+},
+
+computer: {
+  subject: {
+    name: "Computer Science",
+    icon: "💻"
+  },
+  set: {
+    name: "Basic Concepts"
+  },
+  cards: [
+    { question: "HTML stands for?", answer: "HyperText Markup Language" },
+    { question: "CSS is for?", answer: "Styling web pages" },
+    { question: "JS is short for?", answer: "JavaScript" },
+    { question: "Function in JS", answer: "Reusable block of code" },
+    { question: "Variable", answer: "Stores data values" },
+    { question: "Array", answer: "Collection of values in order" },
+    { question: "Object", answer: "Data structure with key-value pairs" },
+    { question: "Loop", answer: "Executes code repeatedly" },
+    { question: "Conditional", answer: "Runs code based on a condition" },
+    { question: "Boolean", answer: "True or false value" }
+  ]
+},
+
+filipino: {
+  subject: {
+    name: "Filipino",
+    icon: "🇵🇭"
+  },
+  set: {
+    name: "Basic Words"
+  },
+  cards: [
+    { question: "Hello in Filipino", answer: "Kumusta" },
+    { question: "Thank you", answer: "Salamat" },
+    { question: "Good morning", answer: "Magandang umaga" },
+    { question: "Good night", answer: "Magandang gabi" },
+    { question: "Yes", answer: "Oo" },
+    { question: "No", answer: "Hindi" },
+    { question: "Please", answer: "Pakiusap" },
+    { question: "Excuse me", answer: "Paumanhin" },
+    { question: "Friend", answer: "Kaibigan" },
+    { question: "Family", answer: "Pamilya" }
+  ]
+},
+
+english: {
+  subject: {
+    name: "English",
+    icon: "📘"
+  },
+  set: {
+    name: "Basic Vocabulary"
+  },
+  cards: [
+    { question: "Hello", answer: "A greeting" },
+    { question: "Goodbye", answer: "A farewell" },
+    { question: "Please", answer: "Used to make a polite request" },
+    { question: "Thank you", answer: "Expression of gratitude" },
+    { question: "Yes", answer: "Affirmative response" },
+    { question: "No", answer: "Negative response" },
+    { question: "Excuse me", answer: "Used to politely get attention" },
+    { question: "Sorry", answer: "Expression of apology" },
+    { question: "Friend", answer: "Someone you have a close relationship with" },
+    { question: "Family", answer: "Group of related people" },
+    { question: "Book", answer: "Collection of written or printed pages" },
+    { question: "School", answer: "Place where people learn" },
+    { question: "Food", answer: "What people eat" },
+    { question: "Water", answer: "Liquid essential for life" },
+    { question: "Happy", answer: "Feeling of joy or pleasure" },
+    { question: "Sad", answer: "Feeling of unhappiness" }
+  ]
+},
+
   biology: {
-    subject: {
-      name: "Biology",
-      icon: "🧬"
-    },
-    set: {
-      name: "Basic Biology"
-    },
+    subject: { name: "Biology", icon: "🧬" },
+    set: { name: "Basic Biology" },
     cards: [
       { question: "What is the powerhouse of the cell?", answer: "Mitochondria" },
-      { question: "What is the largest organ in the human body?", answer: "Skin" }
+      { question: "What is the largest organ in the human body?", answer: "Skin" },
+      { question: "What carries genetic information?", answer: "DNA" },
+      { question: "The basic unit of life?", answer: "Cell" },
+      { question: "Process by which plants make food?", answer: "Photosynthesis" },
+      { question: "Blood cells that fight infection?", answer: "White blood cells" },
+      { question: "Blood cells that carry oxygen?", answer: "Red blood cells" },
+      { question: "Liquid part of blood?", answer: "Plasma" },
+      { question: "Where digestion begins?", answer: "Mouth" },
+      { question: "Organ that pumps blood?", answer: "Heart" },
+      { question: "Where gas exchange occurs?", answer: "Lungs" },
+      { question: "Process of cell division?", answer: "Mitosis" },
+      { question: "Organism made of many cells?", answer: "Multicellular organism" },
+      { question: "Organism made of one cell?", answer: "Unicellular organism" },
+      { question: "Organ that filters blood?", answer: "Kidney" },
+      { question: "Tissue that connects muscles to bones?", answer: "Tendon" },
+      { question: "Tissue that connects bones to bones?", answer: "Ligament" },
+      { question: "Primary molecule in cell membranes?", answer: "Phospholipid" },
+      { question: "Process of evolution?", answer: "Natural selection" },
+      { question: "Study of living organisms?", answer: "Biology" }
+    ]
+  },
+
+  geography: {
+    subject: { name: "Geography", icon: "🌍" },
+    set: { name: "Basic Geography" },
+    cards: [
+      { question: "Largest continent?", answer: "Asia" },
+      { question: "Longest river in the world?", answer: "Nile" },
+      { question: "Largest ocean?", answer: "Pacific" },
+      { question: "Highest mountain?", answer: "Mount Everest" },
+      { question: "Capital of France?", answer: "Paris" },
+      { question: "Country with most population?", answer: "China" },
+      { question: "Continent Australia is in?", answer: "Oceania" },
+      { question: "Imaginary line dividing Earth into N and S?", answer: "Equator" },
+      { question: "Largest desert?", answer: "Sahara" },
+      { question: "What is tectonic plate movement called?", answer: "Plate tectonics" }
+    ]
+  },
+
+  chemistry: {
+    subject: { name: "Chemistry", icon: "⚗️" },
+    set: { name: "Basic Chemistry" },
+    cards: [
+      { question: "Water formula?", answer: "H2O" },
+      { question: "Atomic number?", answer: "Number of protons" },
+      { question: "pH of pure water?", answer: "7" },
+      { question: "Most abundant gas in air?", answer: "Nitrogen" },
+      { question: "Chemical symbol for gold?", answer: "Au" },
+      { question: "Process of solid to gas?", answer: "Sublimation" },
+      { question: "Acidic solution has pH?", answer: "<7" },
+      { question: "Base solution has pH?", answer: ">7" },
+      { question: "Covalent bond?", answer: "Sharing of electrons" },
+      { question: "Ionic bond?", answer: "Transfer of electrons" }
+    ]
+  },
+
+  physics: {
+    subject: { name: "Physics", icon: "🪐" },
+    set: { name: "Basic Physics" },
+    cards: [
+      { question: "Force formula?", answer: "F = ma" },
+      { question: "Speed formula?", answer: "Distance ÷ Time" },
+      { question: "Acceleration formula?", answer: "Change in velocity ÷ Time" },
+      { question: "Unit of energy?", answer: "Joule" },
+      { question: "Unit of force?", answer: "Newton" },
+      { question: "Unit of power?", answer: "Watt" },
+      { question: "Gravity acceleration?", answer: "9.8 m/s²" },
+      { question: "Light speed?", answer: "3 × 10⁸ m/s" },
+      { question: "Newton's 1st law?", answer: "Inertia" },
+      { question: "Newton's 2nd law?", answer: "F = ma" }
+    ]
+  },
+
+  art: {
+    subject: { name: "Art", icon: "🎨" },
+    set: { name: "Basic Art" },
+    cards: [
+      { question: "Primary colors?", answer: "Red, Blue, Yellow" },
+      { question: "Famous painter of Mona Lisa?", answer: "Leonardo da Vinci" },
+      { question: "Art of making sculptures?", answer: "Sculpture" },
+      { question: "Famous Dutch painter of Starry Night?", answer: "Vincent van Gogh" },
+      { question: "Technique of shading?", answer: "Hatching" },
+      { question: "Mixing colors?", answer: "Color theory" },
+      { question: "Modern art style using geometric shapes?", answer: "Cubism" },
+      { question: "Art of decorative writing?", answer: "Calligraphy" },
+      { question: "Famous Mexican muralist?", answer: "Diego Rivera" },
+      { question: "Art movement with surreal imagery?", answer: "Surrealism" }
     ]
   }
 };
@@ -492,12 +757,20 @@ function goToThemes() {
 }
 
 function renderBrowseView() {
-  const builtInSets = [
-    { id: 'math', name: 'Math', icon: '➗', gradient: 'from-blue-400 to-blue-600', count: 12 },
-    { id: 'science', name: 'Science', icon: '🔬', gradient: 'from-green-400 to-green-600', count: 10 },
-    { id: 'english', name: 'English', icon: '📖', gradient: 'from-purple-400 to-purple-600', count: 8 },
-    { id: 'biology', name: 'Biology', icon: '🧬', gradient: 'from-blue-600 to-green-600', count: 8 }
-  ];
+const builtInSets = [
+  { id: 'math', name: 'Math', icon: '➗', gradient: 'from-blue-400 to-blue-600', count: 12 },
+  { id: 'science', name: 'Science', icon: '🔬', gradient: 'from-green-400 to-green-600', count: 10 },
+  { id: 'english', name: 'English', icon: '📖', gradient: 'from-purple-400 to-purple-600', count: 8 },
+  { id: 'biology', name: 'Biology', icon: '🧬', gradient: 'from-blue-600 to-green-600', count: 20 },
+  { id: 'history', name: 'History', icon: '🏛️', gradient: 'from-yellow-400 to-yellow-600', count: 15 },
+  { id: 'filipino', name: 'Filipino', icon: '🇵🇭', gradient: 'from-yellow-400 to-red-600', count: 10 },
+  { id: 'computer', name: 'ComputerScience', icon: '💻', gradient: 'from-pink-400 to-pink-600', count: 16 },
+  { id: 'geography', name: 'Geography', icon: '🌍', gradient: 'from-teal-400 to-teal-600', count: 12 },
+  { id: 'chemistry', name: 'Chemistry', icon: '⚗️', gradient: 'from-indigo-400 to-indigo-600', count: 18 },
+  { id: 'physics', name: 'Physics', icon: '🪐', gradient: 'from-gray-400 to-gray-600', count: 14 },
+  { id: 'art', name: 'Art', icon: '🎨', gradient: 'from-red-400 to-red-600', count: 10 }
+];
+
 
   const setsHTML = builtInSets.map(set => `
     <div 
@@ -561,13 +834,6 @@ function renderBrowseCardsView() {
           onclick="startBrowseStudy('${currentBrowseSetId}')"
         >
           Study
-        </button>
-        <button
-          class="flex-1 py-3 rounded-xl text-white"
-          style="background:var(--secondary)"
-          onclick="startBrowseQuiz('${currentBrowseSetId}')"
-        >
-          Quiz
         </button>
       </div>
 
@@ -791,26 +1057,51 @@ function renderThemesView() {
   `;
 }
 
+function formatName(name) {
+  return name.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function createThemeButton(themeName) {
   const preset = THEME_PRESETS[themeName];
-  if (!preset) return ""; 
+  if (!preset) return "";
+
+  const bgImage = preset.backgroundImage || null;
+  const previewStyle = bgImage
+    ? `background-image:${bgImage}; background-size:cover; background-position:center;`
+    : `background:${preset.colors.background}; border:1px solid #ccc;`;
 
   return `
     <button 
-      style="
-        padding:10px;
-        border-radius:10px;
-        font-weight:600;
-        background:${preset.colors.primary};
-        color:#fff;
-        transition:.2s;
-      "
       onclick="applyThemePreset('${themeName}')"
+      style="
+        padding:8px; 
+        border-radius:10px;
+        background:${preset.colors.card}; 
+        color:${preset.colors.text};
+        text-align:center;
+        font-weight:600;
+        transition:.2s;
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+      "
+      class="theme-btn hover:scale-[1.03]"
     >
-      ${themeName.charAt(0).toUpperCase() + themeName.slice(1)}
+
+      <!-- Preview Box -->
+      <div style="
+        width:100%; 
+        height:60px; 
+        border-radius:8px;
+        ${previewStyle}
+      "></div>
+
+      <!-- Label -->
+      <span style="font-size:13px">${formatName(themeName)}</span>
     </button>
   `;
 }
+
 
 function applyThemePreset(name) {
   const theme = THEME_PRESETS[name];
@@ -2350,45 +2641,45 @@ function applyUserSettings() {
   const s = userSettings;
   const r = document.documentElement.style;
 
+  // Colors
   r.setProperty("--primary", s.colors.primary);
   r.setProperty("--background", s.colors.background);
   r.setProperty("--card-bg", s.colors.card);
   r.setProperty("--text", s.colors.text);
 
+  // Fonts
   r.setProperty("--font-family", s.font.family);
   r.setProperty("--font-size", `${s.font.size}px`);
   r.setProperty("--line-height", s.font.lineHeight);
+
+  // UI Dimensions
   r.setProperty("--radius", `${s.layout.radius}px`);
-
-if (s.backgroundImage) {
-  document.documentElement.style.setProperty("--background-image", s.backgroundImage);
-  document.body.style.backgroundImage = s.backgroundImage;
-  document.body.style.backgroundColor = "transparent";
-} else {
-  document.documentElement.style.setProperty("--background-image", "none");
-  document.body.style.backgroundImage = "none";
-  document.body.style.backgroundColor = s.colors.background;
-
-  document.body.style.removeProperty("background-image");
-  document.documentElement.style.removeProperty("--background-image");
-}
-
   document.documentElement.dataset.cardSize = s.layout.cardSize;
   document.documentElement.dataset.anim = s.layout.animation;
 
-  localStorage.setItem("userSettings", JSON.stringify(s));
-  
-}
+  // Background logic (clean & correct)
+  if (s.backgroundImage) {
+    r.setProperty("--background-image", s.backgroundImage);
+    document.body.style.backgroundImage = s.backgroundImage;
+    document.body.style.backgroundColor = "transparent";
+  } else {
+    r.setProperty("--background-image", "none");
+    document.body.style.backgroundImage = "none";
+    document.body.style.backgroundColor = s.colors.background;
+  }
 
+  // Save settings
+  localStorage.setItem("userSettings", JSON.stringify(s));
+}
 
 let userSettings = loadSettings();
 applyUserSettings();
-
 
 function saveAndApplySettings() {
   localStorage.setItem("userSettings", JSON.stringify(userSettings));
   applyUserSettings();
 }
+
 
 function loadSettings() {
   try {
@@ -2419,16 +2710,75 @@ function renderCustomizationPanel() {
 </div>
 
     <!-- PRIMARY COLOR -->
-    <div class="settings-group">
-      <label>
-        <span>Primary Color</span>
-        <input
-          type="color"
-          value="${userSettings.colors.primary}"
-          onchange="updateSetting('colors.primary', this.value)"
-        />
-      </label>
+<div class="settings-group">
+  <label>
+    <span>Primary Color</span>
+    <input
+      type="color"
+      value="${userSettings.colors.primary}"
+      onchange="updateSetting('colors.primary', this.value)"
+    />
+  </label>
+</div>
+
+<div class="settings-group">
+  <label>
+    <span>Background Color</span>
+    <input
+      type="color"
+      value="${userSettings.colors.background}"
+      onchange="updateSetting('colors.background', this.value)"
+    />
+  </label>
+</div>
+
+<div class="settings-group">
+  <label>
+    <span>Card Color</span>
+    <input
+      type="color"
+      value="${userSettings.colors.card}"
+      onchange="updateSetting('colors.card', this.value)"
+    />
+  </label>
+</div>
+
+<div class="settings-group">
+  <label>
+    <span>Text Color</span>
+    <input
+      type="color"
+      value="${userSettings.colors.text}"
+      onchange="updateSetting('colors.text', this.value)"
+    />
+  </label>
+</div>
+
+<div class="settings-group">
+  <label>
+    <span>Choose Palette</span>
+<h3 class="mt-4 mb-2 font-semibold">Color Palettes</h3>
+<div class="palette-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+  ${Object.keys(COLOR_PALETTES).map(p => `
+    <div class="palette-item"
+      onclick="applyPalette('${p}')"
+      style="
+        cursor:pointer;
+        border-radius:8px;
+        height:45px;
+        border:2px solid #fff;
+        display:flex;overflow:hidden;
+      "
+    >
+      <div style="flex:1;background:${COLOR_PALETTES[p].primary}"></div>
+      <div style="flex:1;background:${COLOR_PALETTES[p].background}"></div>
+      <div style="flex:1;background:${COLOR_PALETTES[p].card}"></div>
     </div>
+  `).join("")}
+</div>
+  </label>
+</div>
+
 
     <!-- FONT FAMILY -->
     <div class="settings-group">
@@ -2496,6 +2846,17 @@ function setLayoutMode(mode) {
   renderApp();
 }
 
+function applyPalette(key){
+  const p = COLOR_PALETTES[key];
+  if(!p) return;
+
+  userSettings.colors.primary = p.primary;
+  userSettings.colors.background = p.background;
+  userSettings.colors.card = p.card;
+  userSettings.colors.text = p.text;
+
+  saveAndApplySettings();
+}
 
 
 document.addEventListener("click", e => {
@@ -2550,33 +2911,23 @@ function applyThemePreset(themeKey) {
   const theme = THEME_PRESETS[themeKey];
   if (!theme) return;
 
-  const r = document.documentElement.style;
+  userSettings.colors = theme.colors;
+  userSettings.font = theme.font || userSettings.font;
+  userSettings.backgroundImage = theme.backgroundImage || null;
+  userSettings.theme = themeKey;
 
-  r.setProperty("--primary", theme.colors.primary);
-  r.setProperty("--background", theme.colors.background || "#ffffff");
-  r.setProperty("--card-bg", theme.colors.card);
-  r.setProperty("--text", theme.colors.text);
-
-  r.setProperty("--font-family", theme.font?.family || "Inter, system-ui, sans-serif");
-  r.setProperty("--font-size", `${theme.font?.size || 14}px`);
-  r.setProperty("--line-height", theme.font?.lineHeight || "1.5");
-
-  if (theme.layout?.radius) r.setProperty("--radius", `${theme.layout.radius}px`);
-
-  const bgImage = theme.backgroundImage || "none";
-  r.setProperty("--background-image", bgImage);
-
-  document.body.style.backgroundImage = bgImage !== "none" ? bgImage : "none";
-  document.body.style.backgroundColor = bgImage === "none" ? theme.colors.background : "transparent";
-
-  // Save the selected theme
+  // Save to localStorage
   localStorage.setItem("selectedTheme", themeKey);
+  saveAndApplySettings(); // this should call applyUserSettings()
 }
 
-// On page load, apply the saved theme
-const savedTheme = localStorage.getItem("selectedTheme") || "light";
-applyThemePreset(savedTheme);
+const savedTheme = localStorage.getItem("selectedTheme");
 
+if (savedTheme) {
+  applyThemePreset(savedTheme);    // Set settings first
+} else {
+  saveAndApplySettings();          // Default fallback settings
+}
 
 
 function deepMerge(target, source) {
@@ -2691,23 +3042,6 @@ function renderApp() {
   if (showBottomNav) {
     app.innerHTML += renderBottomNav();
   }
-
-  // Apply background theme every render
-if (window.currentTheme && THEME_PRESETS[window.currentTheme]) {
-    const theme = THEME_PRESETS[window.currentTheme];
-
-    if (theme.backgroundImage) {
-        document.body.style.backgroundImage = theme.backgroundImage;
-        document.body.style.backgroundSize = "cover";
-        document.body.style.backgroundRepeat = "no-repeat";
-        document.body.style.backgroundPosition = "center";
-        document.body.style.backgroundAttachment = "fixed";
-    } else {
-        document.body.style.backgroundImage = "none";
-        document.body.style.backgroundColor = theme.colors?.background || "#ffffff";
-    }
-}
-
 }
 
 
