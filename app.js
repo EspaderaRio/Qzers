@@ -231,9 +231,9 @@ const THEME_PRESETS = {
 
 blackpink: {
   colors: {
-    primary: "#ff4d6d",
-    background: "#ffe3ec",
-    card: "#ffe3ec",
+    primary: "#E1CBD8",
+    background: "#503A49",
+    card: "#947284",
     text: "#1a1a1a"
   },
   font: { family: "Google Sans" },
@@ -252,25 +252,75 @@ bts: {
 },
 
 twice: {
-  colors: { primary: "#ff6ec7", background: "#fff5fa", card: "#ffe0f2", text: "#111" }
+  colors: { 
+    primary: "#ff6ec7", 
+    background: "#fff5fa", 
+    card: "#ffe0f2", 
+    text: "#111" 
+  },
+  font: { family: "Open Sans" },
+  backgroundImage: "url('images/twice.svg')"
 },
 seventeen: {
-  colors: { primary: "#9d8df1", background: "#f6f3ff", card: "#e8e0ff", text: "#111" }
+  colors: { 
+    primary: "#9d8df1", 
+    background: "#f6f3ff", 
+    card: "#e8e0ff", 
+    text: "#111" 
+  },
+  font: { family: "Poppins" },
+  backgroundImage: "url('images/seventeen.svg')"
 },
 straykids: {
-  colors: { primary: "#bd2222", background: "#fff5f5", card: "#ffe0e0", text: "#111" }
+  colors: { 
+    primary: "#bd2222", 
+    background: "#fff5f5", 
+    card: "#ffe0e0", 
+    text: "#111" 
+  },
+  font: { family: "Poppins" },
+  backgroundImage: "url('images/straykids.svg')"
+
 },
-kpop_exo: {
-  colors: { primary: "#111", background: "#e5e7eb", card: "#fff", text: "#000" }
+exo: {
+  colors: { 
+    primary: "#111", 
+    background: "#e5e7eb", 
+    card: "#fff", 
+    text: "#000" 
+  },
+  font: { family: "Poppins" },
+  backgroundImage: "url('images/exo.svg')"
 },
 redvelvet: {
-  colors: { primary: "#e63946", background: "#fff4f4", card: "#ffe1e1", text: "#111" }
+  colors: { 
+    primary: "#e63946", 
+    background: "#fff4f4", 
+    card: "#ffe1e1", 
+    text: "#111" 
+  },
+  font: { family: "Poppins" },
+  backgroundImage: "url('images/redvelvet.svg')"
 },
 itzy: {
-  colors: { primary: "#ff0099", background: "#fce7f7", card: "#ffdaf5", text: "#111" }
+  colors: { 
+    primary: "#FF1E56", 
+    background: "#FFE600", 
+    card: "#00D0FF", 
+    text: "#111" 
+  },
+  font: { family: "Open Sans" },
+  backgroundImage: "url('images/itzy.svg')"
 },
 newjeans: {
-  colors: { primary: "#4ea8ff", background: "#e7f3ff", card: "#d0e8ff", text: "#111" }
+  colors: { 
+    primary: "#97C9DE", 
+    background: "#DCB69F",  
+    card: "#24537D", 
+    text: "#111" 
+  },
+  font: { family: "Open Sans" },
+  backgroundImage: "url('images/newjeans.svg')"
 }
 
 };
