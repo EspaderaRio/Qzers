@@ -863,7 +863,7 @@ function renderBrowseStudyView() {
 
   return `
     <div class="p-4 max-w-md mx-auto fade-in">
-      <button class="mb-4 px-4 py-2 rounded-lg" 
+      <button class="mb-4 px-4 py-2 rounded-lg"
               style="background:var(--card-bg); cursor:pointer;" 
               onclick="backToBrowseCards()">
         ← Back
@@ -1179,7 +1179,7 @@ function renderHomeView() {
               box-shadow:0 6px 18px rgba(0,0,0,.1);
             "
           >
-            👩‍🏫 Create Quiz (Teacher)
+            👩‍🏫 Create Quiz
           </button>
 
           <!-- Student Quiz -->
@@ -1192,7 +1192,7 @@ function renderHomeView() {
               box-shadow:0 6px 18px rgba(0,0,0,.1);
             "
           >
-            👨‍🎓 Join Quiz (Student)
+            👨‍🎓 Join Quiz
           </button>
 
         </div>
@@ -1222,6 +1222,15 @@ function openStudentQuiz() {
 function renderStudentView() {
   return `
     <div class="flex flex-col items-center mt-6 space-y-6 w-full">
+<div class="w-full flex justify-start mb-2">
+  <button
+    onclick="backStudentBtn()"
+    style="color: var(--primary); background-color: var(--card-bg); border-radius: var(--radius);"
+    class="px-4 py-3 font-semibold"
+  >
+    ← Back
+  </button>
+</div>
 
       <!-- Student Tabs -->
       <div class="flex gap-2">
@@ -1355,7 +1364,7 @@ function renderJoinQuiz() {
         <!-- Quiz Join Section -->
         <h2 style="color: var(--text);" class="text-2xl font-semibold">🧠 Join Quiz</h2>
         <p style="color: var(--secondary-text);" class="text-sm mb-4">
-          Enter the quiz ID provided by your teacher
+          Enter the quiz ID provided
         </p>
 
         <input
@@ -1379,14 +1388,6 @@ function renderJoinQuiz() {
           class="w-full py-3 mb-2 font-semibold"
         >
           📊 View Score History
-        </button>
-
-        <button
-          onclick="backStudentBtn()"
-          style="background-color: var(--primary); color: white; border-radius: var(--radius);"
-          class="w-full py-3 mb-2 font-semibold"
-        >
-          Back
         </button>
 
         <div id="student-error" style="color: red;" class="mt-4 text-center"></div>
@@ -1498,8 +1499,17 @@ function backStudentBtn() {
 
 function renderTeacherView() {
   return `
-    <div  class="flex flex-col items-center mt-6 space-y-6 w-full" style="background-image: var(--background-image); background-size: cover; background-position: center;">
-
+   <div class="flex flex-col items-center mt-6 space-y-4 w-full" 
+     style="background-image: var(--background-image); background-size: cover; background-position: center;">
+  <div class="w-full flex justify-start px-4">
+    <button
+      id="backBtnTeacher"
+      class="px-4 py-2 rounded-lg"
+      style="background:var(--card-bg);"
+    >
+      ← Back
+    </button>
+  </div>
       <!-- Teacher Tabs -->
       <div class="flex gap-2">
         <button
@@ -1539,13 +1549,14 @@ function renderTeacherProfile() {
   const t = getTeacherProfile();
 
   return `
-    <div class="p-4 rounded-xl bg-white shadow space-y-3">
+    <div class="p-4 rounded-xl bg-white shadow space-y-3" style="background-color: var(--surface); color: var(--on-surface);">
       <h2 class="text-xl font-bold">Teacher Profile</h2>
 
       <div>
         <label class="block text-sm font-semibold">Name</label>
         <input id="teacher-name"
           class="w-full p-2 border rounded"
+          style="border-color: var(--border); background: var(--input-bg); color: var(--on-surface);"
           value="${t.name || ""}">
       </div>
 
@@ -1553,6 +1564,7 @@ function renderTeacherProfile() {
         <label class="block text-sm font-semibold">Subject</label>
         <input id="teacher-subject"
           class="w-full p-2 border rounded"
+          style="border-color: var(--border); background: var(--input-bg); color: var(--on-surface);"
           value="${t.subject || ""}">
       </div>
 
@@ -1560,6 +1572,7 @@ function renderTeacherProfile() {
         <label class="block text-sm font-semibold">School</label>
         <input id="teacher-school"
           class="w-full p-2 border rounded"
+           style="border-color: var(--border); background: var(--input-bg); color: var(--on-surface);"
           value="${t.school || ""}">
       </div>
 
@@ -1673,12 +1686,7 @@ function renderTeacherQuizList() {
   return `
     <div class="w-full h-full overflow-auto p-6" style="background: var(--background); font-family: var(--font-family); font-size: var(--font-size); line-height: var(--line-height);">
       <div class="max-w-2xl mx-auto fade-in">
-        <button
-  id="backBtnTeacher"
-  class="px-4 py-2 rounded-lg mb-4"
->
-  ← Back
-</button>
+
 
         <h3 style="font-size:calc(var(--font-size) * 1.2); margin-bottom:12px; color: var(--text);">📋 Your Quizzes</h3>
         ${quizListHTML}
@@ -1691,7 +1699,7 @@ function renderTeacherQuizList() {
         </button>
 
         <h2 style="font-size:calc(var(--font-size) * 1.8); margin:8px; color: var(--text);">👩‍🏫 Create Quiz</h2>
-        <p style="color: var(--secondary-text); margin-bottom:24px;">Build a quiz and share it with your students</p>
+        <p style="color: var(--secondary-text); margin-bottom:24px;">Build a quiz and share it</p>
 
         <input
           id="quiz-title"
@@ -2312,7 +2320,7 @@ function showStudentScoresByQuiz(quizId) {
         </li>
       `).join("")}
     </ul>
-    <button onclick="populateStudentScores()" class="mt-6 px-4 py-2 rounded-xl" style="background:var(--primary); color:white;">
+    <button onclick="populateStudentScores()" class="mb-4 px-4 py-2 rounded-lg" style="background:var(--card-bg); color:white;">
       ← Back to All Scores
     </button>
   `;
@@ -2572,7 +2580,7 @@ function renderStudentScoreHistoryView() {
       <button onclick="clearMyStudentScores()" class="mt-4 px-4 py-2 rounded-xl" style="background:rgba(239,68,68,.15); color:#dc2626;">
       🗑 Clear My Quiz History
       </button>
-      <button onclick="currentView='home'; renderApp();" class="mt-6 px-4 py-2 rounded-xl" style="background:var(--primary); color:white;">
+      <button onclick="currentView='home'; renderApp();" class="mb-4 px-4 py-2 rounded-lg" style="background:var(--primary); color:white;">
         ← Back to Home
       </button>
     </div>
@@ -2598,10 +2606,10 @@ function renderTeacherViewScores() {
   return `
     <div class="w-full h-full p-6">
       <button onclick="currentView='teacher'; renderApp();" 
-        class="mt-6 px-4 py-2 rounded-xl" 
+        class="mb-4 px-4 py-2 rounded-lg" 
         style="background:var(--primary); color:white;">
-        ← Back to Dashboard
-      </button>  m
+        ← Back
+      </button>
       <h2 style="font-size:1.5rem; margin-bottom:16px;">📊 Student Quiz Scores</h2>
       <div id="student-score-container"></div>
       <button onclick="clearAllStudentScores()"
@@ -3081,7 +3089,7 @@ function renderSubjectsView() {
     <div class="subjects-view w-full h-full overflow-auto p-4">
       <div class="max-w-4xl mx-auto">
 
-        <button id="backToHomeBtn" class="px-4 py-2 mb-4 rounded-lg shadow-sm"
+        <button id="backToHomeBtn" class="mb-4 px-4 py-2 rounded-lg"
                 style="background: var(--card-bg); color: var(--text); font-size: var(--font-size);">
           ← Back
         </button>
@@ -3166,23 +3174,22 @@ function renderSetsView() {
         <div class="max-w-4xl w-full mx-auto">
 
           <!-- Header -->
-          <div class="flex items-center justify-between mb-8 slide-in">
-            <button id="backToSubjectsBtn" class="px-4 py-2 rounded-lg transition-all" 
-                    style="background: var(--card-bg); color: var(--text); font-size: var(--font-size); box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-              ← Back
-            </button>
-            
-            <div class="text-center">
-              <div style="font-size:calc(var(--font-size) * 2); margin-bottom: 0.25rem;">
-                ${currentSubject.subject_icon}
-              </div>
-              <h2 style="font-size:calc(var(--font-size) * 1.8); font-weight: 500; color: var(--text);">
-                ${currentSubject.subject_name}
-              </h2>
-            </div>
+                <div class="mb-4">
+        <button id="backToSubjectsBtn" class="px-4 py-2 rounded-lg"
+                style="background: var(--card-bg); color: var(--text); font-size: var(--font-size);">
+          ← Back
+        </button>
+      </div>
 
-            <div style="width: 50px;"></div>
-          </div>
+      <!-- Centered Title + Icon -->
+      <div class="text-center mb-8 slide-in">
+        <div style="font-size: calc(var(--font-size) * 2); margin-bottom: 0.25rem;">
+          ${currentSubject.subject_icon}
+        </div>
+        <h2 style="font-size: calc(var(--font-size) * 1.8); font-weight: 500; color: var(--text);">
+          ${currentSubject.subject_name}
+        </h2>
+      </div>
 
           <!-- Add Set Button -->
           <div class="mb-6">
@@ -3250,21 +3257,19 @@ function renderCardsView() {
     <div class="view-container w-full h-full overflow-auto">
       <div class="view-content max-w-4xl mx-auto p-6">
         <div class="view-inner">
+              <div class="mb-4">
+        <button id="backToSetsBtn"
+                class="px-4 py-2 rounded-lg"
+                style="background: var(--card-bg); color: var(--text); font-size: var(--font-size);">
+          ← Back
+        </button>
+      </div>
 
-          <!-- HEADER -->
-          <div class="cards-header flex items-center justify-between mb-6 slide-in">
-            <button id="backToSetsBtn" class="btn-back px-4 py-2 rounded-lg"
-                    style="background: var(--card-bg); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.08);">
-              <img src="icons/back.svg" class="icon sm" /> Back
-            </button>
-
-            <div class="cards-title text-center">
-              <h2 class="text-xl font-semibold">${currentSet.set_name}</h2>
-              <p class="text-sm text-gray-500">${cards.length} card${cards.length !== 1 ? "s" : ""}</p>
-            </div>
-
-            <div class="header-spacer w-12"></div>
-          </div>
+      <!-- HEADER CENTERED -->
+      <div class="text-center mb-6 slide-in">
+        <h2 class="text-xl font-semibold">${currentSet.set_name}</h2>
+        <p class="text-sm opacity-70">${cards.length} card${cards.length !== 1 ? "s" : ""}</p>
+      </div>
 
           <!-- ACTIONS -->
           <div class="cards-actions">
@@ -3498,19 +3503,20 @@ function renderStudyView() {
         <div class="w-full h-full overflow-auto">
           <div class="min-h-full flex flex-col p-6">
             <div class="max-w-3xl w-full mx-auto flex flex-col" style="height: 100%;">
-              <div class="flex items-center justify-between mb-6 slide-in">
-                <button id="backToCardsBtn" class="px-4 py-2 rounded-lg transition-all" style="background: var(--card-bg); color: var(--text); font-size: var(--font-size);
- box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                      <button id="backToCardsBtn" class="mb-4 px-4 py-2 rounded-lg" style="width:80px; background: var(--card-bg); color: var(--text); font-size: var(--font-size);">
                   ← Back
                 </button>
-                <div class="text-center">
-                  <h2 style="font-size: calc(var(--font-size) * 1.5);
- font-weight: 400; color: var(--text);">${currentSet.set_name}</h2>
-                  <p style="font-size: calc(var(--font-size) * 0.875);
- color: ${subtitleColor};">Card ${currentCardIndex + 1} of ${cards.length}</p>
-                </div>
-                <div style="width: 50px;"></div>
-              </div>
+<div class="flex flex-col items-center mb-6 slide-in text-center">
+  <h2 style="font-size: calc(var(--font-size) * 1.5); font-weight: 400; color: var(--text);">
+    ${currentSet.set_name}
+  </h2>
+<p style="opacity:0.8;font-size: calc(var(--font-size)*0.95); margin-top:4px;">
+  <span style="color:var(--primary); font-weight:600;">${currentCardIndex + 1}</span>
+  <span style="color: var(--text);"> / ${cards.length}</span>
+</p>
+
+</div>
+
               
               <div class="w-full rounded-full mb-6" style="background: rgba(0,0,0,0.1); height: 5px;">
                 <div class="progress-bar h-full rounded-full" style="width: ${progress}%; background: var(--primary);"></div>
