@@ -132,6 +132,17 @@ const THEME_PRESETS = {
       family: "BBHBorgle"
     }
   },
+ 
+futuristic: {
+  colors: {
+    primary: "#00ffea",       
+    background: "#0a0a0a",   
+    card: "#111111",          
+    text: "#00ffe0"           
+  },
+  font: { family: "Orbitron" },  
+  backgroundImage: "url('images/futuristic.svg')"
+},
 
   paper: {
     colors: {
@@ -321,8 +332,182 @@ newjeans: {
   },
   font: { family: "Open Sans" },
   backgroundImage: "url('images/newjeans.svg')"
-}
+},
+  jungle: {
+    colors: {
+      primary: "#1e5128",      
+      background: "#d4f4dd",   
+      card: "#a8e6cf",         
+      text: "#0b3d0b"          
+    },
+    font: { family: "Open Sans" },
+    backgroundImage: "url('images/jungle.svg')"
+  },
 
+  safari: {
+    colors: {
+      primary: "#c19a6b",      
+      background: "#fff8f0",   
+      card: "#f5e0c3",         
+      text: "#5a3e2b"          
+    },
+    font: { family: "Roboto" },
+    backgroundImage: "url('images/safari.svg')"
+  },
+
+  ocean: {
+    colors: {
+      primary: "#0288d1",      
+      background: "#e0f7fa",   
+      card: "#b2ebf2",         
+      text: "#014f86"          
+    },
+    font: { family: "Poppins" },
+    backgroundImage: "url('images/ocean.svg')"
+  },
+
+lake: {
+  colors: {
+    primary: "#1fa2a6",      
+    background: "#d0f0ea",   
+    card: "#a0e3d8",         
+    text: "#054d44"
+  },
+  font: { family: "Open Sans" },
+  backgroundImage: "url('images/lake.svg')"
+},
+
+    animals_jungle: {
+    colors: {
+      primary: "#1e5128",
+      background: "#d4f4dd",
+      card: "#a8e6cf",
+      text: "#0b3d0b"
+    },
+    font: { family: "Open Sans" },
+    backgroundImage: "url('images/animals_jungle.svg')"
+  },
+
+  animals_safari: {
+    colors: {
+      primary: "#c19a6b",
+      background: "#fff8f0",
+      card: "#f5e0c3",
+      text: "#5a3e2b"
+    },
+    font: { family: "Roboto" },
+    backgroundImage: "url('images/animals_safari.svg')"
+  },
+
+  animals_ocean: {
+    colors: {
+      primary: "#0288d1",
+      background: "#e0f7fa",
+      card: "#b2ebf2",
+      text: "#014f86"
+    },
+    font: { family: "Poppins" },
+    backgroundImage: "url('images/animals_ocean.svg')"
+  },
+
+  animals_pets: {
+    colors: {
+      primary: "#ff6f61",
+      background: "#fff0f0",
+      card: "#ffe6e6",
+      text: "#331a1a"
+    },
+    font: { family: "Open Sans" },
+    backgroundImage: "url('images/pets.svg')"
+  },
+
+  animals_arctic: {
+    colors: {
+      primary: "#00bcd4",
+      background: "#e0f7fa",
+      card: "#b2ebf2",
+      text: "#002f3d"
+    },
+    font: { family: "Roboto" },
+    backgroundImage: "url('images/arctic.svg')"
+  },
+
+  animals_rainforest: {
+    colors: {
+      primary: "#2e7d32",
+      background: "#dcedc8",
+      card: "#aed581",
+      text: "#1b5e20"
+    },
+    font: { family: "Open Sans" },
+    backgroundImage: "url('images/rainforest.svg')"
+  },
+
+  animals_desert: {
+    colors: {
+      primary: "#ff9800",
+      background: "#fff3e0",
+      card: "#ffe0b2",
+      text: "#5d4037"
+    },
+    font: { family: "Poppins" },
+    backgroundImage: "url('images/desert.svg')"
+  },
+
+  animals_farm: {
+    colors: {
+      primary: "#f57f17",
+      background: "#fff8e1",
+      card: "#ffecb3",
+      text: "#4e342e"
+    },
+    font: { family: "Open Sans" },
+    backgroundImage: "url('images/farm.svg')"
+  },
+
+  animals_jungle_night: {
+    colors: {
+      primary: "#0d3b1e",
+      background: "#081f0f",
+      card: "#14391c",
+      text: "#c8f5d9"
+    },
+    font: { family: "Roboto" },
+    backgroundImage: "url('images/jungle_night.svg')"
+  },
+
+  animals_deep_sea: {
+    colors: {
+      primary: "#005f73",
+      background: "#001219",
+      card: "#0a9396",
+      text: "#e0fbfc"
+    },
+    font: { family: "Poppins" },
+    backgroundImage: "url('images/deep_sea.svg')"
+  },
+
+  animals_butterflies: {
+    colors: {
+      primary: "#f48fb1",
+      background: "#fff0f6",
+      card: "#ffd6e8",
+      text: "#4a148c"
+    },
+    font: { family: "Open Sans" },
+    backgroundImage: "url('images/butterflies.svg')"
+  },
+
+  animals_tropical_birds: {
+    colors: {
+      primary: "#ff5722",
+      background: "#fff3e0",
+      card: "#ffccbc",
+      text: "#3e2723"
+    },
+    font: { family: "Roboto" },
+    backgroundImage: "url('images/tropical_birds.svg')"
+  }
 };
 
 const COLOR_PALETTES = {
@@ -1022,8 +1207,26 @@ function goBackToBrowse() {
 
 function renderThemesView() {
   const categories = {
-    "Nature": ["forest", "mint", "lavender", "coffee"],
-    "K-pop": [
+  "Nature": [ 
+    "jungle", 
+    "safari", 
+    "ocean",
+    "lake"],
+  "Animals": [  
+  "animals_jungle",
+  "animals_safari",
+  "animals_ocean",
+  "animals_pets",
+  "animals_arctic",
+  "animals_rainforest",
+  "animals_desert",
+  "animals_farm",
+  "animals_jungle_night",
+  "animals_deep_sea",
+  "animals_butterflies",
+  "animals_tropical_birds"
+],
+  "K-pop": [
   "blackpink", 
   "bts", 
   "twice",
@@ -1034,9 +1237,23 @@ function renderThemesView() {
   "itzy",
   "newjeans"
 ],
-    "Dark Aesthetic": ["midnight", "graphite", "cyber"],
-    "Light & Minimal": ["light", "paper", "sunset", "rose"],
-    "Animals": ["sea", "lake"],
+"Vibes": [
+    "forest", 
+    "mint", 
+    "lavender", 
+    "coffee",
+],
+    "Dark Aesthetic": [
+      "midnight", 
+      "graphite", 
+      "cyber",
+    "futuristic"],
+
+    "Light & Minimal": [
+      "light", 
+      "paper", 
+      "sunset", 
+      "rose"]
   };
 
   const themeSection = Object.keys(categories).map(category => `
@@ -2703,10 +2920,29 @@ function loadSettings() {
 
 function renderCustomizationPanel() {
   return `
-    <div class="settings-header">
-      <h2>🎨 Customize Interface</h2>
-      <button id="closeSettingsBtn">✕</button>
-    </div>
+  <div id="settingsMenu" 
+  style="
+    position:relative;
+    padding:20px;
+  "
+>
+<button id="closeSettingsBtn" onclick="closeSettings()"
+  style="
+    position:absolute;
+    top:10px;
+    right:10px;
+    background:none;
+    border:none;
+    font-size:22px;
+    cursor:pointer;
+    padding:4px 8px;
+  "
+>✕</button>
+
+<div class="settings-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+  <h2 style="margin:0;font-size:1.2rem;font-weight:600;">🎨 Customize Interface</h2>
+</div>
+
 
 <div class="settings-group">
   <label class="setting-label">View Mode</label>
@@ -2798,7 +3034,7 @@ function renderCustomizationPanel() {
       "Open Sans", "Open Sans Italic",
       "Google Sans", "Google Sans Italic",
       "Playfair Display", "Playfair Display Italic",
-      "Roboto", "Roboto Italic"
+      "Roboto", "Roboto Italic", "Orbitron"
     ].map(f => `
             <option ${userSettings.font.family === f ? "selected" : ""}>
               ${f}
@@ -2839,6 +3075,7 @@ function renderCustomizationPanel() {
 <button onclick="resetSettings()" class="reset-btn">
   Reset to Default
 </button>
+    </div>
     </div>
   `;
 }
